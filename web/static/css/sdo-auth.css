@@ -1,0 +1,121 @@
+/* sdo-auth.css - Styles for SDO Authentication section */
+/* Path: /Users/amitl/PycharmProjects/self_service_portal/static/css/sdo-auth.css */
+
+/* Secret Double Octopus section styling */
+.sdo-section {
+    background-color: #e6f2ff;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+    position: relative;
+    overflow: hidden;
+}
+
+.sdo-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 150px;
+    height: 150px;
+    background-image: linear-gradient(45deg, rgba(0, 102, 204, 0.1), transparent);
+    border-radius: 0 8px 0 50%;
+    z-index: 0;
+}
+
+.sdo-section h2 {
+    color: #0066cc;
+    font-weight: 600;
+    position: relative;
+    z-index: 1;
+}
+
+.sdo-card {
+    border-left: 4px solid #0066cc;
+    transition: transform 0.3s;
+}
+
+.sdo-card:hover {
+    transform: translateY(-5px);
+}
+
+/* Authentication form styling */
+.auth-form {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    position: relative;
+    z-index: 1;
+}
+
+.auth-form h4 {
+    color: #0066cc;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.auth-form .form-control:focus {
+    border-color: #0066cc;
+    box-shadow: 0 0 0 0.2rem rgba(0, 102, 204, 0.25);
+}
+
+.auth-form .btn-primary {
+    background-color: #0066cc;
+    border-color: #0066cc;
+}
+
+.auth-form .btn-primary:hover {
+    background-color: #0052a3;
+    border-color: #0052a3;
+}
+
+/* Badge styling */
+.badge.bg-primary {
+    background-color: #0066cc !important;
+}
+
+.badge.bg-success {
+    background-color: #28a745 !important;
+}
+
+/* Authentication status indicator */
+.auth-status {
+    display: flex;
+    align-items: center;
+    margin-top: 15px;
+    padding: 8px 12px;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.auth-status.authenticated {
+    color: #28a745;
+}
+
+.auth-status.not-authenticated {
+    color: #6c757d;
+}
+
+.auth-status i {
+    margin-right: 8px;
+    font-size: 1.1rem;
+}
+
+/* Authentication form elements */
+.input-group-text {
+    background-color: #f8f9fa;
+    color: #495057;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767.98px) {
+    .sdo-section {
+        padding: 15px;
+    }
+    
+    .auth-form {
+        margin-bottom: 20px;
+    }
+}

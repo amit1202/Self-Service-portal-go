@@ -1,0 +1,53 @@
+/* Theme transition */
+body {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Theme toggle in navbar */
+.theme-toggle {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 5px 8px;
+    border-radius: 50px;
+    margin-right: 15px;
+    transition: all 0.3s ease;
+}
+
+body.dark-mode .theme-toggle {
+    color: #f8f9fa;
+}
+
+.theme-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.theme-toggle .bi-sun,
+body.dark-mode .theme-toggle .bi-moon {
+    display: none;
+}
+
+.theme-toggle .bi-moon,
+body.dark-mode .theme-toggle .bi-sun {
+    display: inline-block;
+}
+
+/* Quick toggle effect */
+.theme-change-flash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.1);
+    z-index: 9999;
+    pointer-events: none;
+    animation: flash 0.3s ease-out;
+    opacity: 0;
+}
+
+@keyframes flash {
+    0% { opacity: 0; }
+    50% { opacity: 1; }
+    100% { opacity: 0; }
+}
