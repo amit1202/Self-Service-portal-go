@@ -32,7 +32,7 @@ type PortalConfig struct {
 
 func Load() *Config {
 	// Try to load from portal-config.json first
-	portalConfig := loadPortalConfig()
+	portalConfig := LoadPortalConfig()
 
 	config := &Config{
 		Environment:    getEnv("ENVIRONMENT", "development"),
@@ -55,7 +55,7 @@ func Load() *Config {
 	return config
 }
 
-func loadPortalConfig() *PortalConfig {
+func LoadPortalConfig() *PortalConfig {
 	data, err := os.ReadFile("portal-config.json")
 	if err != nil {
 		log.Printf("📥 Could not read portal-config.json: %v", err)

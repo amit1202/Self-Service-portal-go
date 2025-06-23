@@ -329,6 +329,14 @@ func (h *LoginHandler) ProcessLogin(c *gin.Context) {
 	cfg := config.Load()
 	authHandler := NewAuthHandler() // NewAuthHandler now takes no arguments
 
+	// Load portal config for SDO credentials
+	portalConfig := config.LoadPortalConfig()
+	if portalConfig == nil {
+		log.Printf("❌ Failed to load portal config")
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "Configuration error"})
+		return
+	}
+
 	// Use the SDO credentials from the config for the main login
 	// The config should have the full URL with protocol
 	sdoURL := cfg.SDODefaultURL
@@ -337,7 +345,7 @@ func (h *LoginHandler) ProcessLogin(c *gin.Context) {
 	}
 	log.Printf("🔍 Debug: SDO URL from config: %s", cfg.SDODefaultURL)
 	log.Printf("🔍 Debug: Final SDO URL: %s", sdoURL)
-	sdoAuthSuccessful := authHandler.performSDOAuth(c, sdoURL, "amit.lavi@doubleoctopus.com", "Password1!")
+	sdoAuthSuccessful := authHandler.performSDOAuth(c, sdoURL, portalConfig.Auth.SDOEmail, portalConfig.Auth.SDOPassword)
 
 	if !sdoAuthSuccessful {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "SDO Authentication failed"})

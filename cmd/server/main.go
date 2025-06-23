@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"net/http"
 	"os"
@@ -10,6 +11,8 @@ import (
 	"time"
 
 	"self-service-portal/internal/handlers"
+
+	"self-service-portal/internal/config"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
@@ -104,8 +107,36 @@ func main() {
 		user := c.MustGet("user").(string)
 		log.Printf("✅ Authenticated access to /self-service by user: %s", user)
 		log.Println("Self-service flow accessed")
+
+		// Load config and create SDO config JSON
+		cfg := config.Load()
+
+		// Read portal config directly for SDO credentials
+		sdoConfig := map[string]string{
+			"url":      cfg.SDODefaultURL,
+			"email":    "",
+			"password": "",
+		}
+
+		// Try to read portal-config.json for SDO credentials
+		if data, err := os.ReadFile("portal-config.json"); err == nil {
+			var portalConfig struct {
+				Auth struct {
+					SDOEmail    string `json:"sdo_email"`
+					SDOPassword string `json:"sdo_password"`
+				} `json:"auth"`
+			}
+			if json.Unmarshal(data, &portalConfig) == nil {
+				sdoConfig["email"] = portalConfig.Auth.SDOEmail
+				sdoConfig["password"] = portalConfig.Auth.SDOPassword
+			}
+		}
+
+		sdoConfigJSON, _ := json.Marshal(sdoConfig)
+
 		c.HTML(http.StatusOK, "self-service-flow.html", gin.H{
-			"user": user,
+			"user":          user,
+			"SDOConfigJSON": string(sdoConfigJSON),
 		})
 	})
 

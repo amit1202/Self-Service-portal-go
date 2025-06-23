@@ -1375,9 +1375,9 @@
                 method: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify({
-                    url: 'https://amitmt.doubleoctopus.io/admin',
-                    email: 'amit.lavi@doubleoctopus.com',
-                    password: 'Password1!',
+                    url: window.SDO_CONFIG.url,
+                    email: window.SDO_CONFIG.email,
+                    password: window.SDO_CONFIG.password,
                     oa: false
                 }),
                 timeout: 15000, // 15 second timeout
@@ -2174,6 +2174,9 @@
                 `);
             }
         }
+    </script>
+    <script>
+      window.SDO_CONFIG = {{ .SDOConfigJSON }};
     </script>
 </body>
 </html> 
