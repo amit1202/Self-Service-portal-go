@@ -4,6 +4,7 @@
 package config
 
 import (
+	"encoding/json"
 	"log"
 	"os"
 )
@@ -19,8 +20,21 @@ type Config struct {
 	APIRetries     int
 }
 
+type PortalConfig struct {
+	Auth struct {
+		SDOURL       string `json:"sdo_url"`
+		SDOEmail     string `json:"sdo_email"`
+		SDOPassword  string `json:"sdo_password"`
+		Au10tixToken string `json:"au10tix_token"`
+	} `json:"auth"`
+	Updated string `json:"updated"`
+}
+
 func Load() *Config {
-	return &Config{
+	// Try to load from portal-config.json first
+	portalConfig := loadPortalConfig()
+
+	config := &Config{
 		Environment:    getEnv("ENVIRONMENT", "development"),
 		Port:           getEnv("PORT", "8080"),
 		DatabaseURL:    getEnv("DATABASE_URL", "portal.db"),
@@ -30,6 +44,32 @@ func Load() *Config {
 		APITimeout:     30,
 		APIRetries:     3,
 	}
+
+	// Override with portal config if available
+	if portalConfig != nil {
+		if portalConfig.Auth.SDOURL != "" {
+			config.SDODefaultURL = portalConfig.Auth.SDOURL
+		}
+	}
+
+	return config
+}
+
+func loadPortalConfig() *PortalConfig {
+	data, err := os.ReadFile("portal-config.json")
+	if err != nil {
+		log.Printf("📥 Could not read portal-config.json: %v", err)
+		return nil
+	}
+
+	var config PortalConfig
+	if err := json.Unmarshal(data, &config); err != nil {
+		log.Printf("📥 Could not parse portal-config.json: %v", err)
+		return nil
+	}
+
+	log.Printf("📥 Loaded configuration from portal-config.json")
+	return &config
 }
 
 func getEnv(key, defaultValue string) string {

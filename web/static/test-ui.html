@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>UI Test Page</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .card { background: #f8f9fa; padding: 20px; margin: 15px 0; border-radius: 8px; border-left: 4px solid #007bff; }
+        .card-header { background: #007bff; color: white; padding: 10px; margin: -20px -20px 20px -20px; border-radius: 8px 8px 0 0; }
+        .card-body { padding: 0; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+        button.success { background: #28a745; }
+        button.warning { background: #ffc107; color: #212529; }
+        .alert { padding: 15px; border-radius: 4px; margin: 10px 0; }
+        .alert-success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .alert-info { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 UI Test Page</h1>
+        
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="bi bi-shield-check me-2"></i>Identity Verification</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h5>🚀 Test Page</h5>
+                    <p>This is a test page to debug UI updates.</p>
+                    <ul>
+                        <li>✅ No authentication required</li>
+                        <li>✅ Simple UI structure</li>
+                        <li>✅ Direct JavaScript updates</li>
+                    </ul>
+                </div>
+                
+                <div class="text-center">
+                    <button class="btn btn-primary btn-lg" onclick="testVerification()">
+                        <i class="bi bi-play-circle me-2"></i>Start Identity Verification
+                    </button>
+                    <button class="btn btn-outline-success" onclick="simulateVerificationSuccess()">
+                        <i class="bi bi-check-circle me-1"></i>Simulate Verification Success
+                    </button>
+                    <button class="btn btn-outline-warning" onclick="testDirectUpdate()">
+                        <i class="bi bi-bug me-1"></i>Test Direct Update
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function testVerification() {
+            alert('🚀 Test verification function called!');
+        }
+        
+        function simulateVerificationSuccess() {
+            console.log('🎭 Simulate Verification Success button clicked!');
+            
+            // Show loading state
+            const button = event.target;
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Simulating...';
+            button.disabled = true;
+            
+            // Simulate API call with setTimeout
+            setTimeout(() => {
+                console.log('🎭 Simulating API response...');
+                
+                // Show success message
+                button.innerHTML = '<i class="bi bi-check-circle me-1"></i>Success!';
+                button.className = 'btn btn-success btn-lg';
+                
+                // Update the UI IMMEDIATELY
+                console.log('🎭 Updating verification card with success state...');
+                
+                const cardBody = document.querySelector('.card-body');
+                if (!cardBody) {
+                    console.error('❌ Could not find card body!');
+                    return;
+                }
+                
+                console.log('🎭 Found card body, updating now...');
+                
+                // Update the card body immediately
+                cardBody.innerHTML = `
+                    <div class="alert alert-success">
+                        <h5><i class="bi bi-check-circle me-2"></i>Verification Completed!</h5>
+                        <p>✅ Identity verification has been completed successfully.</p>
+                        <ul>
+                            <li>✅ Verification ID: TEST-123</li>
+                            <li>✅ Score: 95</li>
+                            <li>✅ Status: completed</li>
+                            <li>✅ You can now send invitations!</li>
+                        </ul>
+                    </div>
+                    <div class="text-center">
+                        <button class="btn btn-success btn-lg" onclick="simulateVerificationSuccess()">
+                            <i class="bi bi-arrow-clockwise me-2"></i>Refresh Verification
+                        </button>
+                        <button class="btn btn-primary btn-lg ms-2" onclick="proceedToNextStep()">
+                            <i class="bi bi-arrow-right me-2"></i>Next Step
+                        </button>
+                        <button class="btn btn-outline-secondary btn-lg ms-2" onclick="clearVerificationSuccess()">
+                            <i class="bi bi-trash me-2"></i>Clear State
+                        </button>
+                    </div>
+                `;
+                
+                console.log('🎭 Success state updated successfully');
+                console.log('🎭 Card body HTML after update:', cardBody.innerHTML);
+                
+                // Reset button after 3 seconds
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.className = 'btn btn-outline-success';
+                    button.disabled = false;
+                }, 3000);
+                
+            }, 1000);
+        }
+        
+        function testDirectUpdate() {
+            console.log('🧪 Testing direct UI update...');
+            
+            const cardBody = document.querySelector('.card-body');
+            if (!cardBody) {
+                console.error('❌ Could not find card body!');
+                return;
+            }
+            
+            console.log('🧪 Found card body, updating now...');
+            
+            // Update the card body immediately
+            cardBody.innerHTML = `
+                <div class="alert alert-success">
+                    <h5><i class="bi bi-check-circle me-2"></i>TEST - Direct Update!</h5>
+                    <p>✅ This is a direct UI update test.</p>
+                    <ul>
+                        <li>✅ Test ID: TEST-123</li>
+                        <li>✅ Score: 95</li>
+                        <li>✅ Status: completed</li>
+                        <li>✅ Direct update test</li>
+                    </ul>
+                </div>
+                <div class="text-center">
+                    <button class="btn btn-success btn-lg" onclick="testDirectUpdate()">
+                        <i class="bi bi-arrow-clockwise me-2"></i>Test Again
+                    </button>
+                    <button class="btn btn-primary btn-lg ms-2" onclick="proceedToNextStep()">
+                        <i class="bi bi-arrow-right me-2"></i>Next Step
+                    </button>
+                    <button class="btn btn-outline-secondary btn-lg ms-2" onclick="clearVerificationSuccess()">
+                        <i class="bi bi-trash me-2"></i>Clear State
+                    </button>
+                </div>
+            `;
+            
+            console.log('🧪 Test update completed');
+            console.log('🧪 Card body HTML after update:', cardBody.innerHTML);
+        }
+        
+        function proceedToNextStep() {
+            console.log('🚀 Proceeding to next step...');
+            alert('🚀 Moving to next step...');
+        }
+        
+        function clearVerificationSuccess() {
+            console.log('🧹 Clearing verification success state...');
+            
+            const cardBody = document.querySelector('.card-body');
+            cardBody.innerHTML = `
+                <div class="alert alert-info">
+                    <h5>🚀 Test Page</h5>
+                    <p>This is a test page to debug UI updates.</p>
+                    <ul>
+                        <li>✅ No authentication required</li>
+                        <li>✅ Simple UI structure</li>
+                        <li>✅ Direct JavaScript updates</li>
+                    </ul>
+                </div>
+                
+                <div class="text-center">
+                    <button class="btn btn-primary btn-lg" onclick="testVerification()">
+                        <i class="bi bi-play-circle me-2"></i>Start Identity Verification
+                    </button>
+                    <button class="btn btn-outline-success" onclick="simulateVerificationSuccess()">
+                        <i class="bi bi-check-circle me-1"></i>Simulate Verification Success
+                    </button>
+                    <button class="btn btn-outline-warning" onclick="testDirectUpdate()">
+                        <i class="bi bi-bug me-1"></i>Test Direct Update
+                    </button>
+                </div>
+            `;
+            
+            alert('🧹 Verification state cleared');
+        }
+    </script>
+</body>
+</html> 

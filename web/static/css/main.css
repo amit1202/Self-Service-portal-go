@@ -3,6 +3,11 @@ body {
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Hidden class for UI state management */
+.hidden {
+    display: none !important;
+}
+
 /* Theme toggle in navbar */
 .theme-toggle {
     display: flex;

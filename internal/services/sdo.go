@@ -24,8 +24,9 @@ type SDOService struct {
 
 // Aligned with JavaScript auth request structure
 type SDOAuthRequest struct {
-	Email string `json:"email"`
-	OA    string `json:"oa"` // Changed from Password to OA to match JS
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	OA       bool   `json:"oa"` // Changed from Password to OA to match JS
 }
 
 type SDOAuthResponse struct {
@@ -35,14 +36,14 @@ type SDOAuthResponse struct {
 }
 
 type SDOUser struct {
-	ID             string `json:"id"`
-	DisplayName    string `json:"displayName"`
-	Username       string `json:"username"`
-	Email          string `json:"email"`
-	FirstName      string `json:"firstName"`
-	LastName       string `json:"lastName"`
-	DirectoryName  string `json:"directoryName"`
-	OrganizationID string `json:"organizationId"`
+	ID             json.Number `json:"id"`
+	DisplayName    string      `json:"displayName"`
+	Username       string      `json:"username"`
+	Email          string      `json:"email"`
+	FirstName      string      `json:"firstName"`
+	LastName       string      `json:"lastName"`
+	DirectoryName  string      `json:"directoryName"`
+	OrganizationID string      `json:"organizationId"`
 }
 
 type SDOSearchResponse struct {
@@ -50,6 +51,10 @@ type SDOSearchResponse struct {
 	UserCount int       `json:"userCount"`
 	PageSize  int       `json:"pageSize"`
 	Page      int       `json:"page"`
+}
+
+type SDOInvitationPayload struct {
+	Type string `json:"type"`
 }
 
 type SDOInvitationRequest struct {
@@ -62,9 +67,12 @@ type SDOInvitationDetails struct {
 	ID            string `json:"id"`
 	InvitationID  string `json:"invitationId"`
 	InvitationURL string `json:"invitationUrl"`
+	EnrollmentURL string `json:"enrollmentUrl"`
 	URL           string `json:"url"` // Alternative URL field
+	QRCodeURL     string `json:"qr_code_url"`
 	Status        string `json:"status"`
 	CreatedAt     string `json:"createdAt"`
+	Message       string `json:"message,omitempty"`
 }
 
 // InitializeFromSession initializes the SDO service from session data
@@ -129,15 +137,21 @@ func NewSDOService() *SDOService {
 	}
 }
 
+// NewSDOServiceWithAuth creates a new SDOService with pre-configured authentication
+func NewSDOServiceWithAuth(baseURL, token string) *SDOService {
+	return &SDOService{
+		BaseURL: baseURL,
+		Token:   token,
+		Client: &http.Client{
+			Timeout: 30 * time.Second,
+		},
+	}
+}
+
 // NormalizeURL ensures the SDO URL is properly formatted (aligned with JS validation)
 func (s *SDOService) NormalizeURL(rawURL string) string {
 	if rawURL == "" {
 		return ""
-	}
-
-	// Handle default URL case (aligned with JS logic)
-	if strings.Contains(rawURL, "amitmt.doubleoctopus.io") {
-		return "https://" + strings.TrimPrefix(strings.TrimPrefix(rawURL, "http://"), "https://")
 	}
 
 	// Remove protocol if present
@@ -147,18 +161,29 @@ func (s *SDOService) NormalizeURL(rawURL string) string {
 	// Remove trailing slashes
 	url = strings.TrimSuffix(url, "/")
 
+	// Split URL into domain and path
+	parts := strings.SplitN(url, "/", 2)
+	domain := parts[0]
+	path := ""
+	if len(parts) > 1 {
+		path = parts[1]
+	}
+
 	// Basic domain validation (aligned with JS regex)
 	domainRegex := regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+`)
-	if !domainRegex.MatchString(url) {
+	if !domainRegex.MatchString(domain) {
 		return ""
 	}
 
 	// Add https protocol
-	url = "https://" + url
+	url = "https://" + domain
 
 	// Ensure /admin path
-	if !strings.Contains(url, "/admin") {
+	if path == "" || !strings.Contains(path, "admin") {
 		url = url + "/admin"
+	} else {
+		// If path already contains admin, use it as is
+		url = url + "/" + path
 	}
 
 	return url
@@ -177,8 +202,9 @@ func (s *SDOService) Authenticate(baseURL, email, password string) (*SDOAuthResp
 
 	// Use exact same payload as working browser test
 	authReq := SDOAuthRequest{
-		Email: email,
-		OA:    password,
+		Email:    email,
+		Password: password,
+		OA:       false,
 	}
 
 	jsonData, err := json.Marshal(authReq)
@@ -341,41 +367,33 @@ func (s *SDOService) SearchUsers(query string, pageSize int) (*SDOSearchResponse
 	return &searchResp, nil
 }
 
-// SendInvitation sends an invitation to a user (matching Flask implementation exactly)
-func (s *SDOService) SendInvitation(userID string, invitationTypes []string) (*SDOInvitationResponse, error) {
-	if s.Token == "" {
-		return nil, fmt.Errorf("not authenticated with SDO")
+// SendInvitation sends an invitation to a user
+func (s *SDOService) SendInvitation(userID, invitationType string) (*SDOInvitationDetails, error) {
+	// Use the correct API endpoint as specified by the user
+	inviteURL := s.BaseURL + "/api/users/" + userID + "/invitations"
+
+	// Use the exact payload format specified by the user
+	payload := map[string]string{
+		"type": invitationType,
 	}
 
-	if len(invitationTypes) == 0 {
-		return nil, fmt.Errorf("at least one invitation type must be specified")
-	}
-
-	invitationURL := fmt.Sprintf("%s/api/users/%s/invitations", s.BaseURL, userID)
-
-	// Match Flask exactly: {"invite": true, "invitationTypes": ["MOBILE", "WEB"]}
-	invReq := SDOInvitationRequest{
-		Invite:          true,
-		InvitationTypes: invitationTypes,
-	}
-
-	jsonData, err := json.Marshal(invReq)
+	jsonData, err := json.Marshal(payload)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal invitation request: %v", err)
 	}
 
-	log.Printf("Sending invitation to user %s with types: %v", userID, invitationTypes)
-	log.Printf("Invitation URL: %s", invitationURL)
-	log.Printf("Invitation payload: %s", string(jsonData))
+	log.Printf("SDO Service: Sending invitation to user %s with type %s", userID, invitationType)
+	log.Printf("SDO Service: Request URL: %s", inviteURL)
+	log.Printf("SDO Service: Request payload: %s", string(jsonData))
 
-	req, err := http.NewRequest("POST", invitationURL, bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", inviteURL, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create invitation request: %v", err)
 	}
 
-	// Same headers as Flask
-	req.Header.Set("Authorization", "Bearer "+s.Token)
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Authorization", "Bearer "+s.Token)
 
 	resp, err := s.Client.Do(req)
 	if err != nil {
@@ -383,132 +401,137 @@ func (s *SDOService) SendInvitation(userID string, invitationTypes []string) (*S
 	}
 	defer resp.Body.Close()
 
-	log.Printf("Invitation response status: %d", resp.StatusCode)
-
-	if resp.StatusCode == http.StatusUnauthorized {
-		return nil, fmt.Errorf("authentication expired, please re-authenticate")
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %v", err)
 	}
+
+	log.Printf("SDO Service: Invitation response status: %d", resp.StatusCode)
+	log.Printf("SDO Service: Invitation response body: %s", string(body))
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		return nil, fmt.Errorf("invitation failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var invitationResp map[string]interface{}
+	if err := json.Unmarshal(body, &invitationResp); err != nil {
+		return nil, fmt.Errorf("failed to parse invitation response: %v", err)
+	}
+
+	// Extract invitation ID from response
+	// The SDO API returns the invitation ID nested inside an "invitation" object
+	invitationObj, ok := invitationResp["invitation"].(map[string]interface{})
+	if !ok {
+		log.Printf("SDO Service: Full invitation response: %+v", invitationResp)
+		log.Printf("SDO Service: Response keys: %v", getMapKeys(invitationResp))
+		return nil, fmt.Errorf("no invitation object found in response")
+	}
+
+	invitationID, ok := invitationObj["invitationId"].(string)
+	if !ok || invitationID == "" {
+		log.Printf("SDO Service: Invitation object: %+v", invitationObj)
+		log.Printf("SDO Service: Invitation object keys: %v", getMapKeys(invitationObj))
+		return nil, fmt.Errorf("no invitationId found in invitation object")
+	}
+
+	// Extract additional invitation details
+	invType, _ := invitationObj["type"].(string)
+	status, _ := invitationObj["invitationStatus"].(string)
+	createdAt, _ := invitationObj["createdAt"].(string)
+	expiredAt, _ := invitationObj["expiredAt"].(string)
+
+	log.Printf("SDO Service: Successfully extracted invitation ID: %s", invitationID)
+
+	return &SDOInvitationDetails{
+		ID:           invitationID,
+		InvitationID: invitationID,
+		Status:       status,
+		CreatedAt:    createdAt,
+		Message:      fmt.Sprintf("Invitation sent successfully. Type: %s, Expires: %s", invType, expiredAt),
+	}, nil
+}
+
+// GetInvitationDetails retrieves the details of a specific invitation from SDO.
+func (s *SDOService) GetInvitationDetails(invitationID string) (*SDOInvitationDetails, error) {
+	if s.Token == "" {
+		return nil, fmt.Errorf("not authenticated with SDO")
+	}
+
+	// This is the standard endpoint for fetching invitation details.
+	detailsURL := fmt.Sprintf("%s/api/invitations/%s", s.BaseURL, invitationID)
+	log.Printf("SDO Service: Getting invitation details from URL: %s", detailsURL)
+
+	req, err := http.NewRequest("GET", detailsURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create invitation details request: %w", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+s.Token)
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := s.Client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("invitation details request failed: %w", err)
+	}
+	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read invitation response: %v", err)
+		return nil, fmt.Errorf("failed to read invitation details response body: %w", err)
 	}
 
-	log.Printf("Invitation response body: %s", string(body))
+	log.Printf("SDO Service: Invitation details response status: %d", resp.StatusCode)
+	log.Printf("SDO Service: Invitation details response body: %s", string(body))
 
-	// Enhanced response parsing aligned with Flask logic
-	return s.parseInvitationResponse(body, resp.StatusCode)
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("invitation details request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	// Parse the response as a generic map to extract the enrollment URL
+	var responseMap map[string]interface{}
+	if err := json.Unmarshal(body, &responseMap); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal invitation details: %w", err)
+	}
+
+	// Extract the enrollment URL from various possible fields
+	var enrollmentURL string
+	if url, ok := responseMap["enrollmentUrl"].(string); ok && url != "" {
+		enrollmentURL = url
+	} else if url, ok := responseMap["enrollment_url"].(string); ok && url != "" {
+		enrollmentURL = url
+	} else if url, ok := responseMap["url"].(string); ok && url != "" {
+		enrollmentURL = url
+	} else if url, ok := responseMap["invitationUrl"].(string); ok && url != "" {
+		enrollmentURL = url
+	} else if url, ok := responseMap["invitation_url"].(string); ok && url != "" {
+		enrollmentURL = url
+	}
+
+	if enrollmentURL == "" {
+		return nil, fmt.Errorf("no enrollment URL found in invitation details response")
+	}
+
+	log.Printf("SDO Service: Found enrollment URL: %s", enrollmentURL)
+
+	// Create the invitation details with the enrollment URL
+	invitationDetails := &SDOInvitationDetails{
+		ID:            invitationID,
+		InvitationID:  invitationID,
+		EnrollmentURL: enrollmentURL,
+	}
+
+	return invitationDetails, nil
 }
 
-// parseInvitationResponse handles complex response parsing like the JavaScript
-func (s *SDOService) parseInvitationResponse(body []byte, statusCode int) (*SDOInvitationResponse, error) {
-	log.Printf("Parsing invitation response: %s", string(body))
-
-	// Initialize response structure
-	response := &SDOInvitationResponse{
-		Success: statusCode >= 200 && statusCode < 300,
+// ValidateInvitationID checks if an invitation ID matches the expected pattern
+func (s *SDOService) ValidateInvitationID(invitationID string) bool {
+	if invitationID == "" {
+		return false
 	}
 
-	// Store raw response for JavaScript compatibility
-	var rawResponse interface{}
-	if err := json.Unmarshal(body, &rawResponse); err != nil {
-		response.Error = fmt.Sprintf("failed to parse response: %v", err)
-		return response, nil
-	}
-	response.RawResponse = rawResponse
-
-	// Try to extract invitation ID using the same logic as JavaScript
-	invitationID := s.extractInvitationID(rawResponse)
-	if invitationID != "" {
-		response.ID = invitationID
-		response.InvitationID = invitationID
-		log.Printf("Extracted invitation ID: %s", invitationID)
-	}
-
-	// Try to parse as single invitation details
-	var details SDOInvitationDetails
-	if err := json.Unmarshal(body, &details); err == nil {
-		response.InvitationDetails = &details
-		if response.ID == "" && details.ID != "" {
-			response.ID = details.ID
-			response.InvitationID = details.ID
-		}
-	} else {
-		// Try parsing as array (sometimes SDO returns array)
-		var detailsArray []SDOInvitationDetails
-		if err := json.Unmarshal(body, &detailsArray); err == nil && len(detailsArray) > 0 {
-			response.InvitationDetails = &detailsArray[0]
-			if response.ID == "" && detailsArray[0].ID != "" {
-				response.ID = detailsArray[0].ID
-				response.InvitationID = detailsArray[0].ID
-			}
-		}
-	}
-
-	if !response.Success {
-		response.Error = fmt.Sprintf("invitation failed with status %d", statusCode)
-	}
-
-	return response, nil
-}
-
-// extractInvitationID mimics the JavaScript extraction logic
-func (s *SDOService) extractInvitationID(response interface{}) string {
-	log.Printf("Extracting invitation ID from response: %+v", response)
-
-	// Define the expected ID pattern (aligned with JavaScript)
+	// Aligned with JavaScript validation pattern
 	idPattern := regexp.MustCompile(`^018[a-zA-Z0-9]{40,}`)
-
-	// Helper function to search for ID in nested structures
-	var searchForID func(interface{}, int) string
-	searchForID = func(obj interface{}, depth int) string {
-		if depth > 3 {
-			return "" // Prevent infinite recursion
-		}
-
-		switch v := obj.(type) {
-		case map[string]interface{}:
-			// Check common ID field names
-			if id, ok := v["id"].(string); ok && len(id) > 20 && idPattern.MatchString(id) {
-				return id
-			}
-			if id, ok := v["invitationId"].(string); ok && len(id) > 20 && idPattern.MatchString(id) {
-				return id
-			}
-
-			// Search nested objects
-			for _, value := range v {
-				if result := searchForID(value, depth+1); result != "" {
-					return result
-				}
-			}
-
-		case []interface{}:
-			// Search in arrays
-			for _, item := range v {
-				if result := searchForID(item, depth+1); result != "" {
-					return result
-				}
-			}
-
-		case string:
-			// Check if the string itself is a valid ID
-			if len(v) > 20 && idPattern.MatchString(v) {
-				return v
-			}
-		}
-
-		return ""
-	}
-
-	invitationID := searchForID(response, 0)
-	if invitationID != "" {
-		log.Printf("Found invitation ID: %s", invitationID)
-	} else {
-		log.Printf("No valid invitation ID found in response")
-	}
-
-	return invitationID
+	return idPattern.MatchString(invitationID)
 }
 
 // ProxyRequest proxies any request to SDO API (enhanced error handling)
@@ -555,23 +578,27 @@ func (s *SDOService) GetConnectionStatus() map[string]interface{} {
 	return status
 }
 
-// GetInvitationDetails retrieves invitation details by ID (new method to support JS)
-func (s *SDOService) GetInvitationDetails(invitationID string) (*SDOInvitationDetails, error) {
+// Helper function to get map keys for debugging
+func getMapKeys(m map[string]interface{}) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+// Publish triggers the SDO publications API after invitation
+func (s *SDOService) Publish() error {
 	if s.Token == "" {
-		return nil, fmt.Errorf("not authenticated with SDO")
+		return fmt.Errorf("not authenticated with SDO")
 	}
 
-	if invitationID == "" {
-		return nil, fmt.Errorf("invitation ID is required")
-	}
+	publishURL := s.BaseURL + "/api/publications"
+	log.Printf("SDO Service: Publishing to URL: %s", publishURL)
 
-	log.Printf("Fetching invitation details for ID: %s", invitationID)
-
-	invitationURL := fmt.Sprintf("%s/api/invitations/%s", s.BaseURL, invitationID)
-
-	req, err := http.NewRequest("GET", invitationURL, nil)
+	req, err := http.NewRequest("POST", publishURL, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %v", err)
+		return fmt.Errorf("failed to create publication request: %v", err)
 	}
 
 	req.Header.Set("Authorization", "Bearer "+s.Token)
@@ -579,34 +606,15 @@ func (s *SDOService) GetInvitationDetails(invitationID string) (*SDOInvitationDe
 
 	resp, err := s.Client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("request failed: %v", err)
+		return fmt.Errorf("publication request failed: %v", err)
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == http.StatusUnauthorized {
-		return nil, fmt.Errorf("authentication expired, please re-authenticate")
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("publication failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to get invitation details, status: %d", resp.StatusCode)
-	}
-
-	var details SDOInvitationDetails
-	if err := json.NewDecoder(resp.Body).Decode(&details); err != nil {
-		return nil, fmt.Errorf("failed to parse invitation details: %v", err)
-	}
-
-	log.Printf("Retrieved invitation details: %+v", details)
-	return &details, nil
-}
-
-// ValidateInvitationID checks if an invitation ID matches the expected pattern
-func (s *SDOService) ValidateInvitationID(invitationID string) bool {
-	if invitationID == "" {
-		return false
-	}
-
-	// Aligned with JavaScript validation pattern
-	idPattern := regexp.MustCompile(`^018[a-zA-Z0-9]{40,}`)
-	return idPattern.MatchString(invitationID)
+	log.Printf("SDO Service: Publication successful (status: %d)", resp.StatusCode)
+	return nil
 }

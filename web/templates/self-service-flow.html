@@ -1,0 +1,2179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self Service Portal - Complete Flow</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: #408CFF;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .flow-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .flow-step {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            margin-bottom: 30px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .flow-step.active {
+            border-color: #667eea;
+            box-shadow: 0 12px 40px rgba(102, 126, 234, 0.2);
+        }
+        
+        .flow-step.completed {
+            border-color: #28a745;
+            background: rgba(40, 167, 69, 0.05);
+        }
+        
+        .step-header {
+            background: #000;
+            color: white;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .step-header.completed {
+            background: #000;
+        }
+        
+        .step-number {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .flow-step.completed .step-number {
+            background: rgba(40, 167, 69, 0.8);
+            color: white;
+        }
+        
+        .step-body {
+            padding: 30px;
+        }
+        
+        .progress-bar {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            height: 8px;
+            margin: 20px 0;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-fill {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            transition: width 0.5s ease;
+            border-radius: 10px;
+            position: relative;
+        }
+        
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .btn-primary {
+            background: #408CFF;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 24px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background: #1A6ED8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(64, 140, 255, 0.4);
+        }
+        
+        .btn-success {
+            background: #408CFF;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 24px;
+            font-weight: 600;
+        }
+        
+        .btn-success:hover {
+            background: #1A6ED8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(64, 140, 255, 0.4);
+        }
+        
+        .form-control {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 12px 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            outline: none;
+        }
+        
+        .alert {
+            border-radius: 10px;
+            border: none;
+            margin-bottom: 1rem;
+        }
+        
+        .alert-dismissible .btn-close {
+            padding: 0.75rem 1rem;
+        }
+        
+        .qr-container {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            margin: 20px 0;
+            border: 2px dashed #dee2e6;
+            transition: all 0.3s ease;
+        }
+        
+        .qr-container:hover {
+            border-color: #667eea;
+            background: #f0f2ff;
+        }
+        
+        .qr-code {
+            max-width: 300px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin: 10px 0;
+            transition: all 0.3s ease;
+        }
+        
+        .status-indicator:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .user-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+        }
+        
+        .user-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .verification-iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .verification-iframe:hover {
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .step-navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Enhanced form validation styles */
+        .form-control.is-invalid {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+        
+        .invalid-feedback {
+            display: block;
+            width: 100%;
+            margin-top: 0.25rem;
+            font-size: 0.875em;
+            color: #dc3545;
+        }
+        
+        /* Enhanced button states */
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .btn:disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+        
+        /* Enhanced accessibility */
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        /* Enhanced step indicators */
+        .step-number {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .flow-step.completed .step-number {
+            background: rgba(40, 167, 69, 0.8);
+            color: white;
+        }
+        
+        /* Enhanced alerts */
+        .alert {
+            border-radius: 10px;
+            border: none;
+            margin-bottom: 1rem;
+        }
+        
+        .alert-dismissible .btn-close {
+            padding: 0.75rem 1rem;
+        }
+        
+        /* Enhanced user card */
+        .user-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+        }
+        
+        .user-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        /* Enhanced QR container */
+        .qr-container {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            margin: 20px 0;
+            border: 2px dashed #dee2e6;
+            transition: all 0.3s ease;
+        }
+        
+        .qr-container:hover {
+            border-color: #667eea;
+            background: #f0f2ff;
+        }
+        
+        /* Enhanced status indicators */
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin: 10px 0;
+            transition: all 0.3s ease;
+        }
+        
+        .status-indicator:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Enhanced iframe */
+        .verification-iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .verification-iframe:hover {
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* Enhanced navigation */
+        .step-navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        /* Responsive improvements */
+        @media (max-width: 768px) {
+            .flow-container {
+                padding: 10px;
+            }
+            
+            .step-body {
+                padding: 20px;
+            }
+            
+            .step-navigation {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .step-navigation .btn {
+                width: 100%;
+            }
+        }
+        
+        /* Keyboard shortcuts styling */
+        kbd {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 3px;
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+            color: #495057;
+            display: inline-block;
+            font-size: 0.875em;
+            line-height: 1;
+            padding: 0.2em 0.4em;
+            white-space: nowrap;
+        }
+        
+        .alert ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .alert ul li {
+            display: inline-block;
+            margin-right: 15px;
+        }
+        
+        /* Enhanced focus states for accessibility */
+        .btn:focus,
+        .form-control:focus {
+            outline: 2px solid #667eea;
+            outline-offset: 2px;
+        }
+        
+        /* Enhanced loading animations */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .loading-pulse {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        /* Enhanced step transitions */
+        .flow-step {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .flow-step.hidden {
+            transform: translateX(20px);
+            opacity: 0;
+        }
+        
+        .flow-step:not(.hidden) {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        
+        /* Enhanced button hover effects */
+        .btn-primary:hover {
+            background: #1A6ED8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(64, 140, 255, 0.4);
+        }
+        
+        .btn-success:hover {
+            background: #1A6ED8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(64, 140, 255, 0.4);
+        }
+        
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
+        }
+        
+        /* Enhanced form field animations */
+        .form-control {
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            transform: translateY(-1px);
+        }
+        
+        /* Enhanced alert animations */
+        .alert {
+            animation: slideInDown 0.3s ease-out;
+        }
+        
+        @keyframes slideInDown {
+            from {
+                transform: translateY(-10px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Enhanced progress bar animations */
+        .progress-fill {
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Enhanced step number animations */
+        .step-number {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .flow-step.completed .step-number {
+            transform: scale(1.1);
+        }
+        
+        /* Enhanced user card animations */
+        .user-card {
+            animation: fadeInUp 0.5s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Enhanced QR code animations */
+        .qr-code {
+            transition: all 0.3s ease;
+        }
+        
+        .qr-code:hover {
+            transform: scale(1.05);
+        }
+        
+        /* Enhanced status indicator animations */
+        .status-indicator {
+            animation: bounceIn 0.6s ease-out;
+        }
+        
+        @keyframes bounceIn {
+            0% {
+                transform: scale(0.3);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            70% {
+                transform: scale(0.9);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        
+        /* Login screen (Step 1) color adjustments */
+        #step-1 .step-header {
+            background: #000;
+            color: #fff;
+        }
+        #step-1 .btn-primary {
+            background: #408CFF;
+            color: #fff;
+        }
+        #step-1 .btn-primary:hover {
+            background: #1A6ED8;
+        }
+        #step-1 .form-label {
+            color: #000;
+        }
+        #step-1 .form-control:focus {
+            border-color: #408CFF;
+            box-shadow: 0 0 0 0.2rem rgba(64, 140, 255, 0.25);
+        }
+        #step-1 .alert-info {
+            background: #eaf4ff;
+            color: #408CFF;
+            border-color: #408CFF;
+        }
+        #step-1 .alert-success {
+            background: #eaf4ff;
+            color: #408CFF;
+            border-color: #408CFF;
+        }
+    </style>
+</head>
+<body>
+    <div class="flow-container">
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+        </div>
+        
+        <!-- Step 1: Login/Register -->
+        <div class="flow-step active" id="step-1">
+            <div class="step-header">
+                <h3><i class="bi bi-person-circle me-2"></i>Step 1: Login/Register & SDO Authentication</h3>
+                <div class="step-number">1</div>
+            </div>
+            <div class="step-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    This step includes portal login and automatic Secret Double Octopus authentication.
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Portal Login</h5>
+                        <form id="portal-login-form">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Username</label>
+                                <input type="text" class="form-control" id="username" name="username" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="password" name="password" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>Login
+                            </button>
+                        </form>
+                        
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                <strong>Demo Credentials:</strong><br>
+                                Username: <code>admin</code><br>
+                                Password: <code>admin</code>
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>User Information</h5>
+                        <form id="user-info-form">
+                            <div class="mb-3">
+                                <label for="user-email" class="form-label">Email Address</label>
+                                <input type="email" class="form-control" id="user-email" name="email" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="user-firstname" class="form-label">First Name</label>
+                                <input type="text" class="form-control" id="user-firstname" name="firstName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="user-lastname" class="form-label">Last Name</label>
+                                <input type="text" class="form-control" id="user-lastname" name="lastName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="user-phone" class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="user-phone" name="phoneNumber">
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <div id="step-1-alerts"></div>
+                
+                <div class="step-navigation">
+                    <div></div>
+                    <button class="btn btn-primary" onclick="proceedToStep2()" id="step-1-next">
+                        <i class="bi bi-arrow-right me-2"></i>Next: Search User
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Step 2: Search User -->
+        <div class="flow-step hidden" id="step-2">
+            <div class="step-header">
+                <h3><i class="bi bi-search me-2"></i>Step 2: Search User in Octopus</h3>
+                <div class="step-number">2</div>
+            </div>
+            <div class="step-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Searching for user in Secret Double Octopus system...
+                </div>
+                
+                <div id="user-search-container">
+                    <div class="text-center">
+                        <div class="loading-spinner"></div>
+                        <p class="mt-2">Searching for user: <strong id="search-email"></strong></p>
+                    </div>
+                </div>
+                
+                <div id="user-found-container" class="hidden">
+                    <div class="user-card">
+                        <h5><i class="bi bi-person-check me-2"></i>User Found</h5>
+                        <div id="user-details"></div>
+                    </div>
+                </div>
+                
+                <div id="user-not-found-container" class="hidden">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        User not found in the system. Please verify the email address.
+                    </div>
+                </div>
+                
+                <div id="step-2-alerts"></div>
+                
+                <div class="step-navigation">
+                    <button class="btn btn-secondary" onclick="goToStep(1)">
+                        <i class="bi bi-arrow-left me-2"></i>Previous
+                    </button>
+                    <button class="btn btn-primary" onclick="proceedToStep3()" id="step-2-next" disabled>
+                        <i class="bi bi-arrow-right me-2"></i>Next: Verification
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Step 3: User Verification -->
+        <div class="flow-step hidden" id="step-3">
+            <div class="step-header">
+                <h3><i class="bi bi-shield-check me-2"></i>Step 3: Identity Verification</h3>
+                <div class="step-number">3</div>
+            </div>
+            <div class="step-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Starting identity verification process with Au10tix...
+                </div>
+                
+                <div id="verification-container">
+                    <div class="text-center">
+                        <div class="loading-spinner"></div>
+                        <p class="mt-2">Initializing verification session...</p>
+                    </div>
+                </div>
+                
+                <div id="verification-iframe-container" class="hidden">
+                    <h5>Complete Your Verification</h5>
+                    <div class="alert alert-info">
+                        <i class="bi bi-camera-video me-2"></i>
+                        <strong>Camera Access Required:</strong> This verification process requires access to your camera. 
+                        Please allow camera permissions when prompted.
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Important:</strong> If you see a "Camera or microphone permission missing" error:
+                        <ul class="mb-0 mt-2">
+                            <li><strong>Step 1:</strong> Click the camera icon in your browser's address bar and select "Allow"</li>
+                            <li><strong>Step 2:</strong> Refresh the page and try again</li>
+                            <li><strong>Step 3:</strong> Make sure no other applications are using your camera</li>
+                            <li><strong>Step 4:</strong> Try a different browser (Chrome, Firefox, Safari)</li>
+                            <li><strong>Step 5:</strong> Check your system camera settings</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-secondary">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Troubleshooting Tips:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Close video conferencing apps (Zoom, Teams, etc.)</li>
+                            <li>Check if your camera is working in other applications</li>
+                            <li>Try using an external camera if available</li>
+                            <li>Ensure you're using HTTPS or localhost (required for camera access)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-primary">
+                        <i class="bi bi-lightbulb me-2"></i>
+                        <strong>Pro Tip:</strong> If camera permissions don't work in the embedded window, use the "Open in New Tab" button below. 
+                        This often resolves permission issues.
+                    </div>
+                    
+                    <p>Please complete the verification process in the window below:</p>
+                    <iframe id="verification-iframe" class="verification-iframe" allow="camera;microphone"></iframe>
+                    
+                    <div class="mt-3">
+                        <button class="btn btn-success" onclick="checkVerificationStatus()">
+                            <i class="bi bi-check-circle me-2"></i>Check Verification Status
+                        </button>
+                        <button class="btn btn-info" onclick="startAutoStatusCheck()">
+                            <i class="bi bi-arrow-clockwise me-2"></i>Start Auto-Refresh
+                        </button>
+                        <button class="btn btn-secondary" onclick="stopAutoStatusCheck()">
+                            <i class="bi bi-pause-circle me-2"></i>Stop Auto-Refresh
+                        </button>
+                        <button class="btn btn-warning" onclick="retryVerification()">
+                            <i class="bi bi-arrow-clockwise me-2"></i>Retry Verification
+                        </button>
+                        <button class="btn btn-outline-primary" onclick="openVerificationInNewTab()">
+                            <i class="bi bi-box-arrow-up-right me-2"></i>Open in New Tab
+                        </button>
+                        <button class="btn btn-outline-success" onclick="assumeVerificationSuccess()">
+                            <i class="bi bi-check2-all me-2"></i>Assume Success (Skip)
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="step-3-alerts"></div>
+                
+                <div class="step-navigation">
+                    <button class="btn btn-secondary" onclick="goToStep(2)">
+                        <i class="bi bi-arrow-left me-2"></i>Previous
+                    </button>
+                    <button class="btn btn-primary" onclick="proceedToStep4()" id="step-3-next" disabled>
+                        <i class="bi bi-arrow-right me-2"></i>Next: Enrollment
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Step 4: SDO Enrollment -->
+        <div class="flow-step hidden" id="step-4">
+            <div class="step-header">
+                <h3><i class="bi bi-phone me-2"></i>Step 4: SDO Enrollment</h3>
+                <div class="step-number">4</div>
+            </div>
+            <div class="step-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Setting up Secret Double Octopus enrollment (SDO already authenticated in Step 1)...
+                </div>
+                
+                <div id="enrollment-container">
+                    <div class="text-center">
+                        <div class="loading-spinner"></div>
+                        <p class="mt-2">Sending invitation and generating QR code...</p>
+                    </div>
+                </div>
+                
+                <div id="enrollment-error" class="hidden">
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Enrollment Error:</strong> <span id="enrollment-error-message"></span>
+                    </div>
+                    <button class="btn btn-warning" onclick="retryEnrollment()">
+                        <i class="bi bi-arrow-clockwise me-2"></i>Retry Enrollment
+                    </button>
+                </div>
+                
+                <div id="qr-code-container" class="hidden">
+                    <h5><i class="bi bi-qr-code me-2"></i>Scan QR Code to Enroll</h5>
+                    <div class="qr-container">
+                        <img id="qr-code-image" class="qr-code" alt="QR Code">
+                        <div class="mt-3">
+                            <p><strong>Invitation ID:</strong> <code id="invitation-id"></code></p>
+                            <p class="text-muted">Scan this QR code with your mobile device to complete enrollment</p>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle me-2"></i>
+                        <strong>Enrollment Invitation Sent Successfully!</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>An invitation has been sent to your email address</li>
+                            <li>You can scan the QR code above with your mobile device</li>
+                            <li>Or check your email for the invitation link</li>
+                            <li>Complete the enrollment on your mobile device</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div id="step-4-alerts"></div>
+                
+                <div class="step-navigation">
+                    <button class="btn btn-secondary" onclick="goToStep(3)">
+                        <i class="bi bi-arrow-left me-2"></i>Previous
+                    </button>
+                    <button class="btn btn-primary" onclick="proceedToStep5()" id="step-4-next" disabled>
+                        <i class="bi bi-arrow-right me-2"></i>Next: Test Authentication
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Step 5: Test Authentication -->
+        <div class="flow-step hidden" id="step-5">
+            <div class="step-header">
+                <h3><i class="bi bi-check-circle me-2"></i>Step 5: Test Authentication</h3>
+                <div class="step-number">5</div>
+            </div>
+            <div class="step-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Testing authentication after enrollment...
+                </div>
+                
+                <div id="test-auth-container">
+                    <div class="text-center">
+                        <div class="loading-spinner"></div>
+                        <p class="mt-2">Sending test authentication request...</p>
+                    </div>
+                </div>
+                
+                <div id="test-auth-result" class="hidden">
+                    <div class="status-indicator status-success">
+                        <i class="bi bi-check-circle me-2"></i>
+                        Authentication test completed successfully!
+                    </div>
+                </div>
+                
+                <div id="step-5-alerts"></div>
+                
+                <div class="step-navigation">
+                    <button class="btn btn-secondary" onclick="goToStep(4)">
+                        <i class="bi bi-arrow-left me-2"></i>Previous
+                    </button>
+                    <button class="btn btn-success" onclick="proceedToStep6()" id="step-5-next" disabled>
+                        <i class="bi bi-arrow-right me-2"></i>Complete Process
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Step 6: Success -->
+        <div class="flow-step hidden" id="step-6">
+            <div class="step-header completed">
+                <h3><i class="bi bi-trophy me-2"></i>Step 6: Process Complete</h3>
+                <div class="step-number">✓</div>
+            </div>
+            <div class="step-body">
+                <div class="text-center">
+                    <div class="status-indicator status-success" style="font-size: 1.2em; padding: 20px;">
+                        <i class="bi bi-check-circle me-2"></i>
+                        Self-Service Portal Process Completed Successfully!
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h5>What was accomplished:</h5>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <ul class="list-group">
+                                    <li class="list-group-item">
+                                        <i class="bi bi-check text-success me-2"></i>
+                                        Portal authentication completed
+                                    </li>
+                                    <li class="list-group-item">
+                                        <i class="bi bi-check text-success me-2"></i>
+                                        User found in Octopus system
+                                    </li>
+                                    <li class="list-group-item">
+                                        <i class="bi bi-check text-success me-2"></i>
+                                        Identity verification completed
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="list-group">
+                                    <li class="list-group-item">
+                                        <i class="bi bi-check text-success me-2"></i>
+                                        SDO enrollment invitation sent
+                                    </li>
+                                    <li class="list-group-item">
+                                        <i class="bi bi-check text-success me-2"></i>
+                                        QR code generated for mobile enrollment
+                                    </li>
+                                    <li class="list-group-item">
+                                        <i class="bi bi-check text-success me-2"></i>
+                                        Authentication test successful
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button class="btn btn-primary" onclick="restartProcess()">
+                            <i class="bi bi-arrow-clockwise me-2"></i>Start New Process
+                        </button>
+                        <button class="btn btn-secondary" onclick="window.location.href='/dashboard'">
+                            <i class="bi bi-house me-2"></i>Back to Dashboard
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="/static/js/QRCode.js"></script>
+    <script src="/static/js/sdo-auth-js.js"></script>
+    
+    <script>
+        let currentStep = 1;
+        let userData = {};
+        let verificationSessionId = null;
+        let verificationSessionUrl = null; // <-- Add this line
+        let invitationId = null;
+        let statusCheckInterval = null;
+        let stepCompletionStatus = {
+            1: false,
+            2: false,
+            3: false,
+            4: false,
+            5: false,
+            6: false
+        };
+        
+        // Initialize the flow
+        $(document).ready(function() {
+            updateProgress();
+            
+            // Handle portal login form
+            $('#portal-login-form').on('submit', function(e) {
+                e.preventDefault();
+                handlePortalLogin();
+            });
+            
+            // Add form validation
+            setupFormValidation();
+            
+            // Load any saved data
+            loadSavedData();
+            
+            // Setup keyboard navigation
+            setupKeyboardNavigation();
+        });
+        
+        function setupFormValidation() {
+            // Real-time validation for email
+            $('#user-email').on('blur', function() {
+                const email = $(this).val();
+                if (email && !isValidEmail(email)) {
+                    $(this).addClass('is-invalid');
+                    $(this).next('.invalid-feedback').remove();
+                    $(this).after('<div class="invalid-feedback">Please enter a valid email address.</div>');
+                } else {
+                    $(this).removeClass('is-invalid');
+                    $(this).next('.invalid-feedback').remove();
+                }
+            });
+            
+            // Real-time validation for phone
+            $('#user-phone').on('blur', function() {
+                const phone = $(this).val();
+                if (phone && !isValidPhone(phone)) {
+                    $(this).addClass('is-invalid');
+                    $(this).next('.invalid-feedback').remove();
+                    $(this).after('<div class="invalid-feedback">Please enter a valid phone number.</div>');
+                } else {
+                    $(this).removeClass('is-invalid');
+                    $(this).next('.invalid-feedback').remove();
+                }
+            });
+        }
+        
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+        
+        function isValidPhone(phone) {
+            const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+            return phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''));
+        }
+        
+        function loadSavedData() {
+            const savedData = localStorage.getItem('selfServiceUserData');
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+                    userData = data;
+                    
+                    // Populate form fields
+                    $('#user-email').val(data.email || '');
+                    $('#user-firstname').val(data.firstName || '');
+                    $('#user-lastname').val(data.lastName || '');
+                    $('#user-phone').val(data.phoneNumber || '');
+                    
+                    console.log('Loaded saved user data');
+                } catch (e) {
+                    console.log('Failed to load saved data:', e);
+                }
+            }
+        }
+        
+        function saveUserData() {
+            try {
+                localStorage.setItem('selfServiceUserData', JSON.stringify(userData));
+            } catch (e) {
+                console.log('Failed to save user data:', e);
+            }
+        }
+        
+        function clearSavedData() {
+            localStorage.removeItem('selfServiceUserData');
+        }
+        
+        function updateProgress() {
+            // Calculate progress based on completed steps
+            const completedSteps = Object.values(stepCompletionStatus).filter(Boolean).length;
+            const progress = (completedSteps / 5) * 100;
+            $('#progress-fill').css('width', progress + '%');
+            
+            // Update step visual indicators
+            updateStepIndicators();
+        }
+        
+        function updateStepIndicators() {
+            // Update each step's visual state
+            for (let step = 1; step <= 6; step++) {
+                const stepElement = $(`#step-${step}`);
+                const headerElement = stepElement.find('.step-header');
+                const numberElement = stepElement.find('.step-number');
+                
+                if (stepCompletionStatus[step]) {
+                    stepElement.addClass('completed');
+                    headerElement.addClass('completed');
+                    numberElement.html('✓');
+                } else if (step === currentStep) {
+                    stepElement.addClass('active').removeClass('completed');
+                    headerElement.removeClass('completed');
+                    numberElement.html(step);
+                } else {
+                    stepElement.removeClass('active completed');
+                    headerElement.removeClass('completed');
+                    numberElement.html(step);
+                }
+            }
+        }
+        
+        function markStepComplete(step) {
+            stepCompletionStatus[step] = true;
+            updateProgress();
+        }
+        
+        function markStepIncomplete(step) {
+            stepCompletionStatus[step] = false;
+            updateProgress();
+        }
+        
+        function goToStep(step) {
+            // Validate step number
+            if (step < 1 || step > 6) {
+                console.error('Invalid step number:', step);
+                return;
+            }
+            
+            // Hide all steps
+            $('.flow-step').addClass('hidden');
+            
+            // Show target step
+            $(`#step-${step}`).removeClass('hidden');
+            
+            // Update current step
+            currentStep = step;
+            
+            // Update progress
+            updateProgress();
+            
+            // Scroll to top of the step
+            $('html, body').animate({
+                scrollTop: $(`#step-${step}`).offset().top - 20
+            }, 500);
+            
+            // Log step navigation
+            console.log(`Navigated to step ${step}`);
+        }
+        
+        function goToPreviousStep() {
+            if (currentStep > 1) {
+                goToStep(currentStep - 1);
+            }
+        }
+        
+        function goToNextStep() {
+            if (currentStep < 6) {
+                goToStep(currentStep + 1);
+            }
+        }
+        
+        function showAlert(step, type, message) {
+            const alertHtml = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            $(`#step-${step}-alerts`).html(alertHtml);
+        }
+        
+        function handlePortalLogin() {
+            const username = $('#username').val().trim();
+            const password = $('#password').val();
+            
+            // Clear previous alerts
+            $('#step-1-alerts').empty();
+            
+            // Validate inputs
+            if (!username) {
+                showAlert(1, 'danger', 'Please enter a username');
+                $('#username').focus();
+                return;
+            }
+            
+            if (!password) {
+                showAlert(1, 'danger', 'Please enter a password');
+                $('#password').focus();
+                return;
+            }
+            
+            // Show loading state
+            const $button = $('#step-1-next');
+            const originalText = $button.html();
+            $button.prop('disabled', true).html('<span class="loading-spinner"></span> Logging in...');
+            
+            // Clear any previous validation errors
+            $('.form-control').removeClass('is-invalid');
+            $('.invalid-feedback').remove();
+            
+            $.ajax({
+                url: '/api/auth/login',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ username, password }),
+                timeout: 10000, // 10 second timeout
+                success: function(response) {
+                    if (response.success) {
+                        showAlert(1, 'success', 'Portal login successful!');
+                        markStepComplete(1);
+                        
+                        // Enable next button after a short delay
+                        setTimeout(() => {
+                            $button.prop('disabled', false).html(originalText);
+                        }, 1000);
+                    } else {
+                        showAlert(1, 'danger', response.error || 'Login failed. Please check your credentials.');
+                        $button.prop('disabled', false).html(originalText);
+                        markStepIncomplete(1);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    let errorMessage = 'Login failed. Please try again.';
+                    
+                    if (status === 'timeout') {
+                        errorMessage = 'Login request timed out. Please check your connection and try again.';
+                    } else if (xhr.status === 401) {
+                        errorMessage = 'Invalid username or password. Please check your credentials.';
+                    } else if (xhr.status === 500) {
+                        errorMessage = 'Server error. Please try again later.';
+                    } else if (xhr.status === 0) {
+                        errorMessage = 'Network error. Please check your connection.';
+                    }
+                    
+                    showAlert(1, 'danger', errorMessage);
+                    $button.prop('disabled', false).html(originalText);
+                    markStepIncomplete(1);
+                    
+                    console.error('Login error:', { status, error, xhr });
+                }
+            });
+        }
+        
+        function proceedToStep2() {
+            // Clear previous alerts
+            $('#step-1-alerts').empty();
+            
+            // Collect and validate user information
+            const email = $('#user-email').val().trim();
+            const firstName = $('#user-firstname').val().trim();
+            const lastName = $('#user-lastname').val().trim();
+            const phoneNumber = $('#user-phone').val().trim();
+            
+            // Validate required fields
+            if (!email) {
+                showAlert(1, 'danger', 'Please enter an email address');
+                $('#user-email').focus();
+                return;
+            }
+            
+            if (!isValidEmail(email)) {
+                showAlert(1, 'danger', 'Please enter a valid email address');
+                $('#user-email').focus();
+                return;
+            }
+            
+            if (!firstName) {
+                showAlert(1, 'danger', 'Please enter a first name');
+                $('#user-firstname').focus();
+                return;
+            }
+            
+            if (!lastName) {
+                showAlert(1, 'danger', 'Please enter a last name');
+                $('#user-lastname').focus();
+                return;
+            }
+            
+            // Validate phone number if provided
+            if (phoneNumber && !isValidPhone(phoneNumber)) {
+                showAlert(1, 'danger', 'Please enter a valid phone number');
+                $('#user-phone').focus();
+                return;
+            }
+            
+            // Store user data
+            userData = {
+                email: email,
+                firstName: firstName,
+                lastName: lastName,
+                phoneNumber: phoneNumber
+            };
+            
+            // Save to localStorage
+            saveUserData();
+            
+            // Mark step 1 as complete if login was successful
+            if (stepCompletionStatus[1]) {
+                markStepComplete(1);
+            }
+            
+            // Show SDO authentication in progress
+            showAlert(1, 'info', 'Authenticating with Secret Double Octopus...');
+            
+            // Check session status first
+            checkSessionStatus();
+        }
+        
+        function checkSessionStatus() {
+            console.log('Checking session status...');
+            $.ajax({
+                url: '/api/sdo/status',
+                method: 'GET',
+                timeout: 5000,
+                success: function(response) {
+                    console.log('Session status response:', response);
+                    if (response.authenticated) {
+                        console.log('Session is authenticated, proceeding to user search');
+                        goToStep(2);
+                        searchUserInSDO();
+                    } else {
+                        console.log('Session not authenticated, starting SDO authentication');
+                        authenticateWithSDO();
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Session status check failed:', { status, error, xhr });
+                    console.log('Proceeding with SDO authentication');
+                    authenticateWithSDO();
+                }
+            });
+        }
+        
+        function authenticateWithSDO() {
+            // Show loading state
+            const $button = $('#step-1-next');
+            const originalText = $button.html();
+            $button.prop('disabled', true).html('<span class="loading-spinner"></span> Authenticating with SDO...');
+            
+            console.log('Starting SDO authentication...');
+            
+            $.ajax({
+                url: '/api/sdo/auth',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    url: 'https://amitmt.doubleoctopus.io/admin',
+                    email: 'amit.lavi@doubleoctopus.com',
+                    password: 'Password1!',
+                    oa: false
+                }),
+                timeout: 15000, // 15 second timeout
+                success: function(response) {
+                    console.log('SDO authentication response:', response);
+                    if (response.success) {
+                        showAlert(1, 'success', 'SDO authentication successful!');
+                        
+                        // Enable next button and navigate to step 2
+                        setTimeout(() => {
+                            $button.prop('disabled', false).html(originalText);
+                            goToStep(2);
+                            searchUserInSDO();
+                        }, 1000);
+                    } else {
+                        console.error('SDO authentication failed:', response);
+                        showAlert(1, 'danger', response.error || 'SDO authentication failed');
+                        $button.prop('disabled', false).html(originalText);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('SDO authentication error:', { status, error, xhr });
+                    console.error('Response text:', xhr.responseText);
+                    
+                    let errorMessage = 'SDO authentication failed. Please try again.';
+                    
+                    if (status === 'timeout') {
+                        errorMessage = 'SDO authentication timed out. Please check your connection and try again.';
+                    } else if (xhr.status === 401) {
+                        errorMessage = 'Invalid SDO credentials. Please check the configuration.';
+                    } else if (xhr.status === 500) {
+                        errorMessage = 'Server error during SDO authentication. Please try again later.';
+                    } else if (xhr.status === 0) {
+                        errorMessage = 'Network error. Please check your connection.';
+                    }
+                    
+                    showAlert(1, 'danger', errorMessage);
+                    $button.prop('disabled', false).html(originalText);
+                }
+            });
+        }
+        
+        function searchUserInSDO() {
+            // Clear previous alerts
+            $('#step-2-alerts').empty();
+            
+            // Show search email
+            $('#search-email').text(userData.email);
+            
+            // Show loading state
+            $('#user-search-container').removeClass('hidden');
+            $('#user-found-container').addClass('hidden');
+            $('#user-not-found-container').addClass('hidden');
+            
+            // Disable next button during search
+            $('#step-2-next').prop('disabled', true);
+            
+            console.log('Starting user search for:', userData.email);
+            
+            $.ajax({
+                url: '/api/sdo/search',
+                method: 'GET',
+                data: { q: userData.email },
+                timeout: 15000, // 15 second timeout
+                success: function(response) {
+                    console.log('User search response:', response);
+                    console.log('Response type:', typeof response);
+                    console.log('Response success:', response.success);
+                    console.log('Response users:', response.users);
+                    console.log('Users length:', response.users ? response.users.length : 'undefined');
+                    
+                    if (response.success && response.users && response.users.length > 0) {
+                        const user = response.users[0];
+                        console.log('User found:', user);
+                        displayUserFound(user);
+                        markStepComplete(2);
+                    } else {
+                        console.log('No users found or invalid response structure');
+                        console.log('Success:', response.success);
+                        console.log('Users array:', response.users);
+                        displayUserNotFound();
+                        markStepIncomplete(2);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('User search error:', { status, error, xhr });
+                    console.error('Response text:', xhr.responseText);
+                    
+                    let errorMessage = 'Failed to search for user. Please try again.';
+                    
+                    if (status === 'timeout') {
+                        errorMessage = 'Search request timed out. Please check your connection and try again.';
+                    } else if (xhr.status === 401) {
+                        errorMessage = 'Authentication required. Please log in again.';
+                    } else if (xhr.status === 500) {
+                        errorMessage = 'Server error during search. Please try again later.';
+                    } else if (xhr.status === 0) {
+                        errorMessage = 'Network error. Please check your connection.';
+                    }
+                    
+                    showAlert(2, 'danger', errorMessage);
+                    markStepIncomplete(2);
+                    
+                    // Hide loading state
+                    $('#user-search-container').addClass('hidden');
+                }
+            });
+        }
+        
+        function displayUserFound(user) {
+            $('#user-search-container').addClass('hidden');
+            $('#user-found-container').removeClass('hidden');
+            
+            // Store user ID
+            userData.id = user.id;
+            
+            $('#user-details').html(`
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Name:</strong> ${user.displayName}</p>
+                        <p><strong>Email:</strong> ${user.email}</p>
+                        <p><strong>Username:</strong> ${user.username}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Status:</strong> <span class="badge bg-success">${user.status}</span></p>
+                        <p><strong>User ID:</strong> ${user.id}</p>
+                        <p><strong>Type:</strong> ${user.type}</p>
+                    </div>
+                </div>
+            `);
+            
+            $('#step-2-next').prop('disabled', false);
+        }
+        
+        function displayUserNotFound() {
+            $('#user-search-container').addClass('hidden');
+            $('#user-not-found-container').removeClass('hidden');
+            $('#step-2-next').prop('disabled', true);
+        }
+        
+        function proceedToStep3() {
+            goToStep(3);
+            startVerification();
+        }
+        
+        function startVerification() {
+            const verificationData = {
+                firstName: userData.firstName,
+                lastName: userData.lastName,
+                email: userData.email,
+                phoneNumber: userData.phoneNumber
+            };
+            
+            $.ajax({
+                url: '/api/verification/start',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(verificationData),
+                success: function(response) {
+                    console.log('Verification start response:', response);
+                    if (response.success && response.sessionUrl) {
+                        displayVerificationIframe(response.sessionUrl);
+                        verificationSessionId = response.verificationId;
+                        verificationSessionUrl = response.sessionUrl; // <-- Store the URL globally
+                        showAlert(3, 'success', 'Verification session started successfully!');
+                    } else {
+                        console.error('Verification start failed:', response);
+                        showAlert(3, 'danger', 'Failed to start verification process');
+                    }
+                },
+                error: function() {
+                    showAlert(3, 'danger', 'Failed to start verification. Please try again.');
+                }
+            });
+        }
+        
+        function displayVerificationIframe(url) {
+            $('#verification-container').addClass('hidden');
+            $('#verification-iframe-container').removeClass('hidden');
+            
+            // Show initial guidance
+            showAlert(3, 'info', 'Starting verification process. Please ensure your camera is connected and ready.');
+            
+            // Request camera permissions before loading iframe
+            requestCameraPermissions().then(() => {
+                // Add a small delay to ensure permissions are processed
+                setTimeout(() => {
+                    const iframe = $('#verification-iframe');
+                    
+                    // Add error handling for iframe
+                    iframe.on('load', function() {
+                        console.log('Verification iframe loaded successfully');
+                        
+                        // Check if iframe loaded successfully
+                        try {
+                            const iframeDoc = iframe[0].contentDocument || iframe[0].contentWindow.document;
+                            console.log('Iframe document accessible');
+                        } catch (e) {
+                            console.log('Iframe cross-origin, this is expected for Au10tix');
+                        }
+                    }).on('error', function() {
+                        console.error('Verification iframe failed to load');
+                        showAlert(3, 'danger', 'Failed to load verification iframe. Please try again.');
+                    });
+                    
+                    // Add a message event listener to catch iframe communication
+                    window.addEventListener('message', function(event) {
+                        console.log('Received message from iframe:', event);
+                        if (event.origin.includes('10tix.me') || event.origin.includes('au10tix')) {
+                            console.log('Au10tix iframe message:', event.data);
+                        }
+                    });
+                    
+                    iframe.attr('src', url);
+                    showAlert(3, 'success', 'Verification session started! Please complete the verification process in the window below.');
+                    
+                    // Start automatic status checking
+                    startAutoStatusCheck();
+                }, 1000);
+            }).catch((error) => {
+                console.warn('Camera permission not granted:', error);
+                // Still load the iframe, Au10tix will handle permission requests
+                $('#verification-iframe').attr('src', url);
+                showAlert(3, 'warning', 'Camera permission not granted. The verification process will request permissions when needed.');
+                
+                // Start automatic status checking
+                startAutoStatusCheck();
+            });
+        }
+        
+        function requestCameraPermissions() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    console.log('getUserMedia not supported');
+                    showAlert(3, 'warning', 'Camera access not supported in this browser. The verification process will request permissions when needed.');
+                    resolve(); // Continue anyway
+                    return;
+                }
+                
+                // Show permission request message
+                showAlert(3, 'info', 'Requesting camera permissions for verification...');
+                
+                // Try multiple permission strategies
+                const permissionStrategies = [
+                    // Strategy 1: Standard HD camera
+                    () => navigator.mediaDevices.getUserMedia({ 
+                        video: { 
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 },
+                            facingMode: 'user'
+                        }, 
+                        audio: false 
+                    }),
+                    
+                    // Strategy 2: Lower resolution
+                    () => navigator.mediaDevices.getUserMedia({ 
+                        video: { 
+                            width: { ideal: 640 },
+                            height: { ideal: 480 }
+                        }, 
+                        audio: false 
+                    }),
+                    
+                    // Strategy 3: Any available camera
+                    () => navigator.mediaDevices.getUserMedia({ 
+                        video: true, 
+                        audio: false 
+                    })
+                ];
+                
+                // Try each strategy
+                let currentStrategy = 0;
+                
+                function tryNextStrategy() {
+                    if (currentStrategy >= permissionStrategies.length) {
+                        // All strategies failed
+                        showAlert(3, 'warning', 'Camera permission could not be granted. The verification process will attempt to request permissions directly.');
+                        resolve(); // Continue anyway
+                        return;
+                    }
+                    
+                    permissionStrategies[currentStrategy]()
+                        .then(stream => {
+                            console.log('Camera permission granted with strategy', currentStrategy + 1);
+                            showAlert(3, 'success', 'Camera permission granted! You can now proceed with verification.');
+                            
+                            // Stop the stream immediately - we just wanted permission
+                            stream.getTracks().forEach(track => track.stop());
+                            resolve();
+                        })
+                        .catch(error => {
+                            console.log(`Strategy ${currentStrategy + 1} failed:`, error);
+                            currentStrategy++;
+                            tryNextStrategy();
+                        });
+                }
+                
+                tryNextStrategy();
+            });
+        }
+        
+        function checkVerificationStatus() {
+            if (!verificationSessionId) {
+                showAlert(3, 'danger', 'No verification session found');
+                return;
+            }
+            
+            console.log('Checking verification status for session:', verificationSessionId);
+            
+            $.ajax({
+                url: `/api/verification/${verificationSessionId}/status`,
+                method: 'GET',
+                timeout: 10000, // 10 second timeout
+                success: function(response) {
+                    console.log('Verification status response:', response);
+                    
+                    if (response.success) {
+                        const status = response.status;
+                        const result = response.result;
+                        
+                        if (status === 'completed' || result === 'verified') {
+                            showAlert(3, 'success', 'Verification completed successfully!');
+                            $('#step-3-next').prop('disabled', false);
+                            markStepComplete(3);
+                            stopAutoStatusCheck();
+                        } else if (status === 'failed' || result === 'failed') {
+                            showAlert(3, 'danger', 'Verification failed. Please try again.');
+                            $('#step-3-next').prop('disabled', true);
+                            stopAutoStatusCheck();
+                        } else if (status === 'pending' || status === 'in_progress') {
+                            // Check if there's any indication of completion in the response
+                            if (response.data && response.data.sessionResult) {
+                                const sessionResult = response.data.sessionResult;
+                                if (sessionResult.completionStatus === 'COMPLETED' || 
+                                    sessionResult.completionStatus === 'SUCCESS') {
+                                    showAlert(3, 'success', 'Verification completed successfully!');
+                                    $('#step-3-next').prop('disabled', false);
+                                    markStepComplete(3);
+                                    stopAutoStatusCheck();
+                                } else {
+                                    showAlert(3, 'warning', 'Verification still in progress. Please complete the process and try again.');
+                                }
+                            } else {
+                                showAlert(3, 'warning', 'Verification still in progress. Please complete the process and try again.');
+                            }
+                        } else {
+                            showAlert(3, 'info', `Verification status: ${status}`);
+                        }
+                    } else {
+                        showAlert(3, 'danger', 'Failed to check verification status');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Verification status check error:', { status, error, xhr });
+                    
+                    let errorMessage = 'Failed to check verification status';
+                    
+                    if (status === 'timeout') {
+                        errorMessage = 'Status check timed out. Please try again.';
+                    } else if (xhr.status === 404) {
+                        errorMessage = 'Verification session not found. Please restart verification.';
+                    } else if (xhr.status === 500) {
+                        errorMessage = 'Server error during status check. Please try again later.';
+                    } else if (xhr.status === 0) {
+                        errorMessage = 'Network error. Please check your connection.';
+                    }
+                    
+                    showAlert(3, 'danger', errorMessage);
+                }
+            });
+        }
+        
+        function proceedToStep4() {
+            goToStep(4);
+            startEnrollment();
+        }
+        
+        function startEnrollment() {
+            // Show loading state
+            $('#enrollment-container').removeClass('hidden');
+            $('#qr-code-container').addClass('hidden');
+            $('#enrollment-error').addClass('hidden');
+            
+            // Disable next button during enrollment
+            $('#step-4-next').prop('disabled', true);
+            
+            // Clear any previous alerts
+            $('#step-4-alerts').empty();
+            
+            console.log('Starting SDO enrollment for user:', userData.email);
+            
+            // Send invitation directly since SDO is already authenticated
+            sendInvitation();
+        }
+        
+        function sendInvitation() {
+            console.log('Sending invitation to:', userData.email);
+            
+            $.ajax({
+                url: '/api/sdo/invite',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    email: userData.email,
+                    userId: userData.id,
+                    invitationTypes: ['MOBILE'] // Or whatever types you need
+                }),
+                timeout: 20000,
+                success: function(response) {
+                    console.log('Invitation response:', response);
+                    if (response.success && response.invitationId) {
+                        invitationId = response.invitationId;
+                        console.log('Invitation sent successfully. ID:', invitationId);
+                        // Now, generate the QR code with the new ID
+                        generateQRCode(invitationId);
+                    } else {
+                        console.error('Failed to send invitation:', response);
+                        showEnrollmentError(response.error || 'Could not get a valid invitation ID.');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Invitation error:', { status, error, xhr });
+                    let errorMessage = 'Failed to send invitation. Please try again.';
+                    if (status === 'timeout') {
+                        errorMessage = 'Invitation request timed out.';
+                    } else if (xhr.status === 500) {
+                        errorMessage = 'Server error during invitation.';
+                    }
+                    showEnrollmentError(errorMessage);
+                }
+            });
+        }
+
+        function generateQRCode(invitationId) {
+            console.log('Generating QR code for invitation ID:', invitationId);
+
+            $.ajax({
+                url: '/api/sdo/qr',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ invitationId: invitationId }),
+                timeout: 15000,
+                success: function(response) {
+                    console.log('QR Code response:', response);
+                    if (response.success && response.qrCode) {
+                        console.log('QR code received.');
+                        displayQRCode(response.qrCode, invitationId);
+                        markStepComplete(4);
+                    } else {
+                        console.error('Failed to generate QR code:', response);
+                        showEnrollmentError(response.error || 'Could not generate QR code.');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('QR code generation error:', { status, error, xhr });
+                    let errorMessage = 'Failed to generate QR code. Please try again.';
+                     if (status === 'timeout') {
+                        errorMessage = 'QR code request timed out.';
+                    } else if (xhr.status === 500) {
+                        errorMessage = 'Server error during QR code generation.';
+                    }
+                    showEnrollmentError(errorMessage);
+                }
+            });
+        }
+        
+        function displayQRCode(qrCodeDataUrl, invId) {
+            $('#enrollment-container').addClass('hidden');
+            $('#enrollment-error').addClass('hidden');
+            $('#qr-code-container').removeClass('hidden');
+            
+            $('#qr-code-image').attr('src', qrCodeDataUrl);
+            $('#invitation-id').text(invId);
+            
+            $('#step-4-next').prop('disabled', false);
+            
+            showAlert(4, 'success', 'Enrollment invitation sent and QR code generated successfully!');
+        }
+        
+        function showEnrollmentError(message) {
+            $('#enrollment-container').addClass('hidden');
+            $('#qr-code-container').addClass('hidden');
+            $('#enrollment-error').removeClass('hidden');
+            
+            $('#enrollment-error-message').text(message);
+            $('#step-4-next').prop('disabled', true);
+            
+            markStepIncomplete(4);
+        }
+        
+        function retryEnrollment() {
+            $('#enrollment-error').addClass('hidden');
+            startEnrollment();
+        }
+        
+        function proceedToStep5() {
+            goToStep(5);
+            testAuthentication();
+        }
+        
+        function testAuthentication() {
+            // Call backend to verify user state
+            $('#test-auth-container').removeClass('hidden');
+            $('#test-auth-result').addClass('hidden');
+            $('#step-5-next').prop('disabled', true);
+
+            if (!userData.id) {
+                showAlert(5, 'danger', 'User ID not found. Please restart the process.');
+                $('#test-auth-container').addClass('hidden');
+                return;
+            }
+
+            $.ajax({
+                url: '/api/sdo/verify-user',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ userId: userData.id }),
+                timeout: 10000,
+                success: function(response) {
+                    if (response.success) {
+                        $('#test-auth-container').addClass('hidden');
+                        $('#test-auth-result').removeClass('hidden');
+                        $('#step-5-next').prop('disabled', false);
+                        showAlert(5, 'success', 'User authentication verified successfully!');
+                    } else {
+                        showAlert(5, 'danger', response.error || 'User verification failed.');
+                        $('#test-auth-container').addClass('hidden');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    let errorMessage = 'User verification failed.';
+                    if (xhr.responseText) {
+                        try {
+                            const errResp = JSON.parse(xhr.responseText);
+                            errorMessage = errResp.error || errorMessage;
+                        } catch (e) {}
+                    }
+                    showAlert(5, 'danger', errorMessage);
+                    $('#test-auth-container').addClass('hidden');
+                }
+            });
+        }
+        
+        function proceedToStep6() {
+            goToStep(6);
+        }
+        
+        function restartProcess() {
+            // Stop any ongoing status checks
+            stopAutoStatusCheck();
+            
+            // Reset all data
+            userData = {};
+            verificationSessionId = null;
+            invitationId = null;
+            
+            // Reset step completion status
+            stepCompletionStatus = {
+                1: false,
+                2: false,
+                3: false,
+                4: false,
+                5: false,
+                6: false
+            };
+            
+            // Clear saved data
+            clearSavedData();
+            
+            // Clear SDO authentication state
+            clearSDOAuthState();
+            
+            // Reset forms
+            $('#portal-login-form')[0].reset();
+            $('#user-info-form')[0].reset();
+            
+            // Clear validation states
+            $('.form-control').removeClass('is-invalid');
+            $('.invalid-feedback').remove();
+            
+            // Clear all alerts
+            $('[id$="-alerts"]').empty();
+            
+            // Reset UI states
+            $('.flow-step').removeClass('completed active');
+            $('#step-1').addClass('active');
+            $('.hidden').addClass('hidden');
+            
+            // Reset containers
+            $('#user-search-container').addClass('hidden');
+            $('#user-found-container').addClass('hidden');
+            $('#user-not-found-container').addClass('hidden');
+            $('#verification-container').removeClass('hidden');
+            $('#verification-iframe-container').addClass('hidden');
+            $('#enrollment-container').removeClass('hidden');
+            $('#qr-code-container').addClass('hidden');
+            $('#test-auth-container').removeClass('hidden');
+            $('#test-auth-result').addClass('hidden');
+            
+            // Reset progress
+            currentStep = 1;
+            updateProgress();
+            
+            // Reset buttons
+            $('.btn').prop('disabled', false);
+            $('#step-1-next').html('<i class="bi bi-arrow-right me-2"></i>Next: Search User');
+            
+            // Focus on first input
+            $('#username').focus();
+            
+            // Show success message
+            showAlert(1, 'success', 'Process reset successfully. You can start over.');
+            
+            console.log('Process restarted');
+        }
+        
+        function clearSDOAuthState() {
+            // Clear SDO authentication from session
+            $.ajax({
+                url: '/api/sdo/logout',
+                method: 'POST',
+                contentType: 'application/json',
+                success: function(response) {
+                    console.log('SDO authentication cleared');
+                },
+                error: function() {
+                    console.log('Failed to clear SDO authentication');
+                }
+            });
+        }
+        
+        function setupKeyboardNavigation() {
+            // Handle Enter key in form fields
+            $('.form-control').on('keypress', function(e) {
+                if (e.which === 13) { // Enter key
+                    e.preventDefault();
+                    const $currentField = $(this);
+                    const $nextField = $currentField.closest('.mb-3').next().find('.form-control');
+                    
+                    if ($nextField.length > 0) {
+                        $nextField.focus();
+                    } else {
+                        // If it's the last field in the current step, trigger the next button
+                        const $nextButton = $currentField.closest('.step-body').find('.btn-primary:not(:disabled)').first();
+                        if ($nextButton.length > 0) {
+                            $nextButton.click();
+                        }
+                    }
+                }
+            });
+            
+            // Handle arrow key navigation between steps
+            $(document).on('keydown', function(e) {
+                // Only handle if not in an input field
+                if ($(e.target).is('input, textarea, select')) {
+                    return;
+                }
+                
+                switch (e.which) {
+                    case 37: // Left arrow - previous step
+                        if (currentStep > 1) {
+                            e.preventDefault();
+                            goToPreviousStep();
+                        }
+                        break;
+                    case 39: // Right arrow - next step
+                        if (currentStep < 6 && stepCompletionStatus[currentStep]) {
+                            e.preventDefault();
+                            goToNextStep();
+                        }
+                        break;
+                    case 27: // Escape key - clear alerts
+                        e.preventDefault();
+                        $('.alert').alert('close');
+                        break;
+                }
+            });
+            
+            // Add keyboard shortcuts info
+            addKeyboardShortcutsInfo();
+        }
+        
+        function addKeyboardShortcutsInfo() {
+            const shortcutsInfo = `
+                <div class="alert alert-info alert-dismissible fade show" role="alert">
+                    <i class="bi bi-keyboard me-2"></i>
+                    <strong>Keyboard Shortcuts:</strong>
+                    <ul class="mb-0 mt-1">
+                        <li><kbd>←</kbd> Previous step</li>
+                        <li><kbd>→</kbd> Next step (when available)</li>
+                        <li><kbd>Enter</kbd> Next field or proceed</li>
+                        <li><kbd>Esc</kbd> Close alerts</li>
+                    </ul>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            // Add to the top of the flow container
+            $('.flow-container').prepend(shortcutsInfo);
+        }
+        
+        function startAutoStatusCheck() {
+            // Clear any existing interval
+            if (statusCheckInterval) {
+                clearInterval(statusCheckInterval);
+            }
+            
+            // Check status every 5 seconds
+            statusCheckInterval = setInterval(() => {
+                if (verificationSessionId) {
+                    checkVerificationStatus();
+                }
+            }, 5000);
+            
+            console.log('Started automatic status checking');
+        }
+        
+        function stopAutoStatusCheck() {
+            if (statusCheckInterval) {
+                clearInterval(statusCheckInterval);
+                statusCheckInterval = null;
+                console.log('Stopped automatic status checking');
+            }
+        }
+        
+        function retryVerification() {
+            // Clear the iframe and restart the verification process
+            $('#verification-iframe').attr('src', '');
+            
+            // Stop any ongoing status checks
+            stopAutoStatusCheck();
+            
+            // Clear any existing alerts
+            $('#step-3-alerts').empty();
+            
+            // Show retry message
+            showAlert(3, 'info', 'Restarting verification process...');
+            
+            // Restart the verification
+            setTimeout(() => {
+                startVerification();
+            }, 1000);
+        }
+        
+        function openVerificationInNewTab() {
+            if (!verificationSessionId) {
+                showAlert(3, 'warning', 'No verification session found. Please start verification first.');
+                return;
+            }
+            // Use the stored URL if available
+            if (verificationSessionUrl) {
+                window.open(verificationSessionUrl, '_blank');
+                showAlert(3, 'info', 'Verification opened in new tab. Please complete the process there and return here to check status.');
+                return;
+            }
+            // Fallback: Get the verification URL from the current session
+            $.ajax({
+                url: `/api/verification/${verificationSessionId}/url`,
+                method: 'GET',
+                success: function(response) {
+                    if (response.success && response.sessionUrl) {
+                        verificationSessionUrl = response.sessionUrl; // cache for later
+                        window.open(response.sessionUrl, '_blank');
+                        showAlert(3, 'info', 'Verification opened in new tab. Please complete the process there and return here to check status.');
+                    } else {
+                        showAlert(3, 'warning', 'Could not retrieve verification URL.');
+                    }
+                },
+                error: function() {
+                    showAlert(3, 'warning', 'Could not retrieve verification URL.');
+                }
+            });
+        }
+        
+        function assumeVerificationSuccess() {
+            // Show confirmation dialog
+            if (confirm('Are you sure you want to assume verification success? This will bypass the verification process and mark it as completed for testing purposes.')) {
+                // Proceed with assuming success
+                showAlert(3, 'success', 'Verification assumed successfully! Proceeding to next step...');
+                $('#step-3-next').prop('disabled', false);
+                markStepComplete(3);
+                stopAutoStatusCheck();
+                
+                // Hide the iframe container and show completion message
+                $('#verification-iframe-container').addClass('hidden');
+                $('#verification-container').removeClass('hidden').html(`
+                    <div class="text-center">
+                        <div class="status-indicator status-success">
+                            <i class="bi bi-check-circle me-2"></i>
+                            Verification completed successfully!
+                        </div>
+                        <p class="mt-3 text-muted">Verification was assumed successful for testing purposes.</p>
+                    </div>
+                `);
+            }
+        }
+    </script>
+</body>
+</html> 

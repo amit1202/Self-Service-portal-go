@@ -21,40 +21,15 @@
     <div class="container mt-4">
         <div class="row">
             <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h4><i class="bi bi-shield-check me-2"></i>Identity Verification</h4>
-                    </div>
-                    <div class="card-body">
-                        <div class="alert alert-info">
-                            <h5>🚀 Go Version is Running!</h5>
-                            <p>Your Flask Python app has been successfully converted to Go!</p>
-                            <ul>
-                                <li>✅ Authentication system working</li>
-                                <li>✅ Database integration active</li>
-                                <li>✅ Session management enabled</li>
-                                <li>🔄 Identity verification features being migrated...</li>
-                            </ul>
-                        </div>
-                        
-                        <div class="text-center">
-                            <button class="btn btn-primary btn-lg" onclick="testVerification()">
-                                <i class="bi bi-play-circle me-2"></i>Start Identity Verification
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
+                <!-- Main Self-Service Flow card -->
                 <div class="card mt-4">
-                    <div class="card-header">
-                        <h4><i class="bi bi-search me-2"></i>User Search</h4>
+                    <div class="card-header text-center bg-success text-white">
+                        <h4><i class="bi bi-arrow-right-circle me-2"></i>Main Self-Service Flow</h4>
                     </div>
-                    <div class="card-body">
-                        <div class="input-group mb-3">
-                            <input type="text" class="form-control" placeholder="Search users..." id="searchInput">
-                            <button class="btn btn-primary" onclick="searchUsers()">Search</button>
-                        </div>
-                        <div id="searchResults"></div>
+                    <div class="card-body text-center">
+                        <a href="/self-service" class="btn btn-lg btn-success px-5 py-3" style="font-size: 1.5rem;">
+                            <i class="bi bi-arrow-right-circle me-2"></i>Start Self-Service Flow
+                        </a>
                     </div>
                 </div>
             </div>
@@ -87,30 +62,10 @@
                                 {{end}}
                             </li>
                         </ul>
-                        
                         <div class="mt-3">
                             <a href="/config" class="btn btn-outline-primary w-100">
                                 <i class="bi bi-gear me-1"></i>Configuration
                             </a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card mt-4">
-                    <div class="card-header">
-                        <h4>Quick Actions</h4>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-grid gap-2">
-                            <button class="btn btn-success" onclick="testAPI()">
-                                <i class="bi bi-check-circle me-1"></i>Test API Connection
-                            </button>
-                            <button class="btn btn-info" onclick="generateQR()">
-                                <i class="bi bi-qr-code me-1"></i>Generate QR Code
-                            </button>
-                            <button class="btn btn-warning" onclick="checkHealth()">
-                                <i class="bi bi-heart-pulse me-1"></i>Health Check
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -120,6 +75,223 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Global error handler to prevent JavaScript errors from breaking functionality
+        window.addEventListener('error', function(event) {
+            console.error('🚨 Global error caught:', event.error);
+            console.error('🚨 Error details:', {
+                message: event.error?.message,
+                stack: event.error?.stack,
+                filename: event.filename,
+                lineno: event.lineno,
+                colno: event.colno
+            });
+            
+            // Prevent the error from causing navigation or other issues
+            event.preventDefault();
+            return false;
+        });
+        
+        // Global unhandled promise rejection handler
+        window.addEventListener('unhandledrejection', function(event) {
+            console.error('🚨 Unhandled promise rejection:', event.reason);
+            event.preventDefault();
+            return false;
+        });
+        
+        // Prevent any accidental form submissions
+        document.addEventListener('DOMContentLoaded', function() {
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    console.log('🛡️ Form submission intercepted:', form.action || 'unknown');
+                    // Only prevent if it's not an intentional form submission
+                    if (!form.dataset.allowSubmit) {
+                        e.preventDefault();
+                        console.warn('🚫 Form submission blocked');
+                        return false;
+                    }
+                });
+            });
+            
+            // Track page navigation attempts
+            window.addEventListener('beforeunload', function(e) {
+                console.warn('🚨 Page is about to unload!', e);
+                console.warn('🚨 Current URL:', window.location.href);
+                console.warn('🚨 Stack trace:', new Error().stack);
+                
+                // If we're in the middle of a simulation, try to prevent navigation
+                if (window.verificationSuccessActive) {
+                    console.warn('🚫 Blocking navigation during verification simulation');
+                    e.preventDefault();
+                    e.returnValue = 'Navigation blocked during verification simulation';
+                    return e.returnValue;
+                }
+            });
+            
+            // Track navigation events
+            window.addEventListener('popstate', function(e) {
+                console.warn('🚨 Popstate event detected:', e);
+            });
+            
+            // Track hash changes
+            window.addEventListener('hashchange', function(e) {
+                console.warn('🚨 Hash change detected:', e);
+            });
+        });
+        
+        // Check verification status when page loads (but don't reset if already successful)
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔄 Page loaded, checking for persisted verification state...');
+            
+            // Check if we have a persisted success state
+            const hasSuccessState = localStorage.getItem('verificationSuccess') === 'true';
+            const verificationSession = localStorage.getItem('verificationSession');
+            
+            if (hasSuccessState && verificationSession) {
+                console.log('✅ Found persisted success state, restoring...');
+                const session = JSON.parse(verificationSession);
+                
+                // Find the verification card and restore success state
+                const verificationCard = document.querySelector('.card .card-header h4').closest('.card');
+                const cardBody = verificationCard.querySelector('.card-body');
+                
+                cardBody.innerHTML = `
+                    <div class="alert alert-success">
+                        <h5><i class="bi bi-check-circle me-2"></i>Verification Completed!</h5>
+                        <p>✅ Identity verification has been completed successfully.</p>
+                        <ul>
+                            <li>✅ Verification ID: ${session.id}</li>
+                            <li>✅ Score: ${session.score || 'N/A'}</li>
+                            <li>✅ Status: ${session.status}</li>
+                            <li>✅ You can now send invitations!</li>
+                        </ul>
+                    </div>
+                    <div class="text-center">
+                        <button class="btn btn-success btn-lg" onclick="simulateVerificationSuccess(event)">
+                            <i class="bi bi-arrow-clockwise me-2"></i>Refresh Verification
+                        </button>
+                        <button class="btn btn-primary btn-lg ms-2" onclick="proceedToNextStep()">
+                            <i class="bi bi-arrow-right me-2"></i>Next Step
+                        </button>
+                        <button class="btn btn-outline-secondary btn-lg ms-2" onclick="clearVerificationSuccess()">
+                            <i class="bi bi-trash me-2"></i>Clear State
+                        </button>
+                    </div>
+                `;
+                
+                console.log('✅ Success state restored successfully');
+                return;
+            }
+            
+            // TEMPORARILY DISABLED: Only check if we don't already have a success state
+            console.log('🔍 Skipping automatic verification check to prevent interference');
+            /*
+            const verificationCard = document.querySelector('.card .card-header h4');
+            if (verificationCard && verificationCard.textContent.includes('Identity Verification')) {
+                const cardBody = verificationCard.closest('.card').querySelector('.card-body');
+                const hasSuccessState = cardBody.innerHTML.includes('Verification Completed!');
+                
+                if (!hasSuccessState) {
+                    console.log('🔍 No persisted state found, checking verification status...');
+                    checkVerificationStatus();
+                }
+            }
+            */
+        });
+
+        function checkVerificationStatus() {
+            console.log('🔍 Checking overall verification status...');
+            
+            fetch('/api/verification/check-simulated')
+            .then(response => response.json())
+            .then(data => {
+                console.log('🔍 Verification status check response:', data);
+                
+                if (data.success && data.hasVerification) {
+                    console.log('✅ Found completed verification session');
+                    
+                    // Find the verification card and update it
+                    const verificationCard = document.querySelector('.card .card-header h4').closest('.card');
+                    const cardBody = verificationCard.querySelector('.card-body');
+                    
+                    // Only update if not already showing success state
+                    if (!cardBody.innerHTML.includes('Verification Completed!')) {
+                        cardBody.innerHTML = `
+                            <div class="alert alert-success">
+                                <h5><i class="bi bi-check-circle me-2"></i>Verification Completed!</h5>
+                                <p>✅ Identity verification has been completed successfully.</p>
+                                <ul>
+                                    <li>✅ Verification ID: ${data.session.id}</li>
+                                    <li>✅ Score: ${data.session.score || 'N/A'}</li>
+                                    <li>✅ Status: ${data.session.status}</li>
+                                    <li>✅ You can now send invitations!</li>
+                                </ul>
+                            </div>
+                            <div class="text-center">
+                                <button class="btn btn-success btn-lg" onclick="simulateVerificationSuccess(event)">
+                                    <i class="bi bi-arrow-clockwise me-2"></i>Refresh Verification
+                                </button>
+                                <button class="btn btn-primary btn-lg ms-2" onclick="proceedToNextStep()">
+                                    <i class="bi bi-arrow-right me-2"></i>Next Step
+                                </button>
+                                <button class="btn btn-outline-secondary btn-lg ms-2" onclick="clearVerificationSuccess()">
+                                    <i class="bi bi-trash me-2"></i>Clear State
+                                </button>
+                            </div>
+                        `;
+                    }
+                    
+                } else {
+                    console.log('❌ No completed verification found');
+                    
+                    // Find the verification card and update it
+                    const verificationCard = document.querySelector('.card .card-header h4').closest('.card');
+                    const cardBody = verificationCard.querySelector('.card-body');
+                    
+                    // Only update if not already showing success state
+                    if (!cardBody.innerHTML.includes('Verification Completed!')) {
+                        cardBody.innerHTML = `
+                            <div class="alert alert-info">
+                                <h5>🚀 Go Version is Running!</h5>
+                                <p>Your Flask Python app has been successfully converted to Go!</p>
+                                <ul>
+                                    <li>✅ Authentication system working</li>
+                                    <li>✅ Database integration active</li>
+                                    <li>✅ Session management enabled</li>
+                                    <li>🔄 Identity verification features being migrated...</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="text-center">
+                                <button class="btn btn-primary btn-lg" onclick="testVerification()">
+                                    <i class="bi bi-play-circle me-2"></i>Start Identity Verification
+                                </button>
+                            </div>
+                        `;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('❌ Error checking verification status:', error);
+                
+                // Find the verification card and show error
+                const verificationCard = document.querySelector('.card .card-header h4').closest('.card');
+                const cardBody = verificationCard.querySelector('.card-body');
+                
+                cardBody.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h5><i class="bi bi-x-circle me-2"></i>Error Checking Verification Status</h5>
+                        <p>❌ Failed to check verification status: ${error.message}</p>
+                    </div>
+                    <div class="text-center">
+                        <button class="btn btn-primary btn-lg" onclick="checkVerificationStatus()">
+                            <i class="bi bi-arrow-clockwise me-2"></i>Retry
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
         function testVerification() {
             alert('🚀 Verification system ready! This will integrate with Au10tix API.');
         }
@@ -131,20 +303,22 @@
                 return;
             }
             
-            fetch(`/api/users/search?q=${encodeURIComponent(query)}`)
+            fetch(`/api/sdo/search?q=${encodeURIComponent(query)}`)
                 .then(response => response.json())
                 .then(data => {
                     const results = document.getElementById('searchResults');
-                    if (data.length === 0) {
+                    if (!data.success || !data.users || data.users.length === 0) {
                         results.innerHTML = '<div class="alert alert-info">No users found</div>';
                         return;
                     }
                     
                     let html = '<div class="list-group">';
-                    data.forEach(user => {
+                    data.users.forEach(user => {
+                        const userName = user.displayName || user.firstName + ' ' + user.lastName || user.username || 'Unknown User';
+                        const userEmail = user.email || user.id;
                         html += `<div class="list-group-item">
-                            <h6>${user.firstName || 'Demo'} ${user.lastName || 'User'}</h6>
-                            <small>${user.email || user.id}</small>
+                            <h6>${userName}</h6>
+                            <small>${userEmail}</small>
                         </div>`;
                     });
                     html += '</div>';
@@ -156,25 +330,401 @@
                 });
         }
         
-        function testAPI() {
-            fetch('/health')
-                .then(response => response.json())
-                .then(data => {
-                    alert(`✅ API Status: ${data.status.toUpperCase()}\nVersion: ${data.version}`);
+        function simulateVerificationSuccess(event) {
+            try {
+                console.log('🎭 Simulate Verification Success button clicked!');
+                
+                // Prevent any default behavior that might cause navigation
+                if (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    console.log('🎭 Prevented default event behavior');
+                }
+                
+                // Prevent any form submissions
+                const forms = document.querySelectorAll('form');
+                forms.forEach(form => {
+                    form.addEventListener('submit', function(e) {
+                        console.warn('🚫 Form submission blocked during simulation');
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return false;
+                    });
                 });
+                
+                // Prevent any navigation
+                const originalPushState = history.pushState;
+                const originalReplaceState = history.replaceState;
+                history.pushState = function() {
+                    console.warn('🚫 History pushState blocked during simulation');
+                    return false;
+                };
+                history.replaceState = function() {
+                    console.warn('🚫 History replaceState blocked during simulation');
+                    return false;
+                };
+                
+                // Override window.location to prevent navigation
+                const originalLocation = window.location;
+                const originalHref = window.location.href;
+                const originalAssign = window.location.assign;
+                const originalReplace = window.location.replace;
+                const originalReload = window.location.reload;
+                
+                Object.defineProperty(window.location, 'href', {
+                    get: function() {
+                        return originalHref;
+                    },
+                    set: function(value) {
+                        console.warn('🚫 window.location.href assignment blocked:', value);
+                        return false;
+                    }
+                });
+                
+                window.location.assign = function() {
+                    console.warn('🚫 window.location.assign blocked during simulation');
+                    return false;
+                };
+                
+                window.location.replace = function() {
+                    console.warn('🚫 window.location.replace blocked during simulation');
+                    return false;
+                };
+                
+                window.location.reload = function() {
+                    console.warn('🚫 window.location.reload blocked during simulation');
+                    return false;
+                };
+                
+                // Add a specific beforeunload handler for this operation
+                const beforeUnloadHandler = function(e) {
+                    console.warn('🚨 Beforeunload triggered during simulation!');
+                    console.warn('🚨 Current URL:', window.location.href);
+                    e.preventDefault();
+                    e.returnValue = 'Navigation blocked during verification simulation';
+                    return e.returnValue;
+                };
+                
+                window.addEventListener('beforeunload', beforeUnloadHandler);
+                
+                console.log('🎭 About to call /api/verification/create-simulated');
+                
+                // Show loading state
+                const button = event ? event.target : document.querySelector('[onclick*="simulateVerificationSuccess"]');
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Simulating...';
+                button.disabled = true;
+                
+                // Call the server endpoint to create a simulated verification session
+                console.log('🎭 Starting fetch request...');
+                fetch('/api/verification/create-simulated', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    redirect: 'manual' // Prevent any automatic redirects
+                })
+                .then(response => {
+                    console.log('🎭 Response received!');
+                    console.log('🎭 Response status:', response.status);
+                    console.log('🎭 Response statusText:', response.statusText);
+                    console.log('🎭 Response headers:', response.headers);
+                    console.log('🎭 Response type:', response.type);
+                    console.log('🎭 Response url:', response.url);
+                    console.log('🎭 Response redirected:', response.redirected);
+                    
+                    // Check if there's a redirect
+                    if (response.redirected) {
+                        console.warn('🚨 Response was redirected!');
+                        throw new Error('Response was redirected - this might cause navigation');
+                    }
+                    
+                    // Check if status indicates redirect
+                    if (response.status >= 300 && response.status < 400) {
+                        console.warn('🚨 Response status indicates redirect:', response.status);
+                        throw new Error('Response status indicates redirect');
+                    }
+                    
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('🎭 Simulation response:', data);
+                    if (data.success) {
+                        // Show success message
+                        button.innerHTML = '<i class="bi bi-check-circle me-1"></i>Success!';
+                        button.className = 'btn btn-success btn-lg';
+                        
+                        // Show a toast notification
+                        showToast('✅ Verification success simulated! You can now send invitations without completing the verification process.', 'success');
+                        
+                        // Store success state in localStorage to persist it
+                        localStorage.setItem('verificationSuccess', 'true');
+                        localStorage.setItem('verificationSession', JSON.stringify(data.session));
+                        
+                        // Update the UI IMMEDIATELY without any delays
+                        console.log('🎭 Updating verification card with success state IMMEDIATELY...');
+                        
+                        // Find the verification card and update it directly
+                        const verificationCard = document.querySelector('.card .card-header h4').closest('.card');
+                        if (!verificationCard) {
+                            console.error('❌ Could not find verification card!');
+                            return;
+                        }
+                        
+                        const cardBody = verificationCard.querySelector('.card-body');
+                        if (!cardBody) {
+                            console.error('❌ Could not find card body!');
+                            return;
+                        }
+                        
+                        console.log('🎭 Found verification card and body, updating now...');
+                        
+                        // Update the card body immediately
+                        cardBody.innerHTML = `
+                            <div class="alert alert-success">
+                                <h5><i class="bi bi-check-circle me-2"></i>Verification Completed!</h5>
+                                <p>✅ Identity verification has been completed successfully.</p>
+                                <ul>
+                                    <li>✅ Verification ID: ${data.session.id}</li>
+                                    <li>✅ Score: ${data.session.score || 'N/A'}</li>
+                                    <li>✅ Status: ${data.session.status}</li>
+                                    <li>✅ You can now send invitations!</li>
+                                </ul>
+                            </div>
+                            <div class="text-center">
+                                <button class="btn btn-success btn-lg" onclick="simulateVerificationSuccess(event)">
+                                    <i class="bi bi-arrow-clockwise me-2"></i>Refresh Verification
+                                </button>
+                                <button class="btn btn-primary btn-lg ms-2" onclick="proceedToNextStep()">
+                                    <i class="bi bi-arrow-right me-2"></i>Next Step
+                                </button>
+                                <button class="btn btn-outline-secondary btn-lg ms-2" onclick="clearVerificationSuccess()">
+                                    <i class="bi bi-trash me-2"></i>Clear State
+                                </button>
+                            </div>
+                        `;
+                        
+                        console.log('🎭 Success state updated successfully');
+                        console.log('🎭 Card body HTML after update:', cardBody.innerHTML);
+                        
+                        // Set a flag to prevent any other code from resetting this
+                        window.verificationSuccessActive = true;
+                        
+                        // Reset button after 3 seconds
+                        setTimeout(() => {
+                            button.innerHTML = originalText;
+                            button.className = 'btn btn-success btn-lg';
+                            button.disabled = false;
+                        }, 3000);
+                        
+                        // Monitor for any changes to the card body
+                        const observer = new MutationObserver(function(mutations) {
+                            mutations.forEach(function(mutation) {
+                                if (mutation.type === 'childList' && !cardBody.innerHTML.includes('Verification Completed!')) {
+                                    console.warn('⚠️ Card body was changed! Restoring success state...');
+                                    // Restore the success state
+                                    cardBody.innerHTML = `
+                                        <div class="alert alert-success">
+                                            <h5><i class="bi bi-check-circle me-2"></i>Verification Completed!</h5>
+                                            <p>✅ Identity verification has been completed successfully.</p>
+                                            <ul>
+                                                <li>✅ Verification ID: ${data.session.id}</li>
+                                                <li>✅ Score: ${data.session.score || 'N/A'}</li>
+                                                <li>✅ Status: ${data.session.status}</li>
+                                                <li>✅ You can now send invitations!</li>
+                                            </ul>
+                                        </div>
+                                        <div class="text-center">
+                                            <button class="btn btn-success btn-lg" onclick="simulateVerificationSuccess(event)">
+                                                <i class="bi bi-arrow-clockwise me-2"></i>Refresh Verification
+                                            </button>
+                                            <button class="btn btn-primary btn-lg ms-2" onclick="proceedToNextStep()">
+                                                <i class="bi bi-arrow-right me-2"></i>Next Step
+                                            </button>
+                                            <button class="btn btn-outline-secondary btn-lg ms-2" onclick="clearVerificationSuccess()">
+                                                <i class="bi bi-trash me-2"></i>Clear State
+                                            </button>
+                                        </div>
+                                    `;
+                                }
+                            });
+                        });
+                        
+                        observer.observe(cardBody, { childList: true, subtree: true });
+                        
+                        // Prevent any page reloads for the next 10 seconds
+                        console.log('🎭 Preventing page reloads for 10 seconds...');
+                        const originalReload = window.location.reload;
+                        window.location.reload = function() {
+                            console.warn('🚫 Page reload blocked by simulate success protection');
+                            return false;
+                        };
+                        
+                        // Prevent any navigation
+                        const originalAssign = window.location.assign;
+                        const originalReplace = window.location.replace;
+                        window.location.assign = function() {
+                            console.warn('🚫 Location assign blocked by simulate success protection');
+                            return false;
+                        };
+                        window.location.replace = function() {
+                            console.warn('🚫 Location replace blocked by simulate success protection');
+                            return false;
+                        };
+                        
+                        setTimeout(() => {
+                            window.location.reload = originalReload;
+                            window.location.assign = originalAssign;
+                            window.location.replace = originalReplace;
+                            history.pushState = originalPushState;
+                            history.replaceState = originalReplaceState;
+                            console.log('🎭 Navigation protection removed');
+                        }, 10000);
+                        
+                        // Clean up the beforeunload handler
+                        window.removeEventListener('beforeunload', beforeUnloadHandler);
+                        
+                        // Restore window.location.href
+                        Object.defineProperty(window.location, 'href', {
+                            get: function() {
+                                return originalHref;
+                            },
+                            set: function(value) {
+                                originalLocation.href = value;
+                            }
+                        });
+                        
+                    } else {
+                        // Show error message
+                        button.innerHTML = '<i class="bi bi-x-circle me-1"></i>Failed';
+                        button.className = 'btn btn-danger btn-lg';
+                        showToast('❌ Failed to simulate verification: ' + (data.error || 'Unknown error'), 'error');
+                        
+                        // Reset button after 3 seconds
+                        setTimeout(() => {
+                            button.innerHTML = originalText;
+                            button.className = 'btn btn-success btn-lg';
+                            button.disabled = false;
+                        }, 3000);
+                        
+                        // Clean up navigation protection
+                        window.location.reload = originalReload;
+                        window.location.assign = originalAssign;
+                        window.location.replace = originalReplace;
+                        history.pushState = originalPushState;
+                        history.replaceState = originalReplaceState;
+                        window.removeEventListener('beforeunload', beforeUnloadHandler);
+                        
+                        // Restore window.location.href
+                        Object.defineProperty(window.location, 'href', {
+                            get: function() {
+                                return originalHref;
+                            },
+                            set: function(value) {
+                                originalLocation.href = value;
+                            }
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Simulation error:', error);
+                    
+                    // Show error message
+                    button.innerHTML = '<i class="bi bi-x-circle me-1"></i>Error';
+                    button.className = 'btn btn-danger btn-lg';
+                    showToast('❌ Error: ' + error.message, 'error');
+                    
+                    // Reset button after 3 seconds
+                    setTimeout(() => {
+                        button.innerHTML = originalText;
+                        button.className = 'btn btn-success btn-lg';
+                        button.disabled = false;
+                    }, 3000);
+                    
+                    // Clean up navigation protection
+                    window.location.reload = originalReload;
+                    window.location.assign = originalAssign;
+                    window.location.replace = originalReplace;
+                    history.pushState = originalPushState;
+                    history.replaceState = originalReplaceState;
+                    window.removeEventListener('beforeunload', beforeUnloadHandler);
+                    
+                    // Restore window.location.href
+                    Object.defineProperty(window.location, 'href', {
+                        get: function() {
+                            return originalHref;
+                        },
+                        set: function(value) {
+                            originalLocation.href = value;
+                        }
+                    });
+                });
+            } catch (error) {
+                console.error('❌ Critical error in simulateVerificationSuccess:', error);
+                alert('❌ Critical error: ' + error.message);
+            }
         }
         
-        function generateQR() {
-            alert('🔄 QR Code generation will be integrated with the verification system!');
+        // Function to proceed to next step
+        function proceedToNextStep() {
+            console.log('🚀 Proceeding to next step...');
+            showToast('🚀 Moving to next step...', 'info');
+            
+            // You can add your next step logic here
+            // For example, redirect to invitation page or show invitation options
+            alert('Next step functionality will be implemented here!');
         }
         
-        function checkHealth() {
-            fetch('/health')
-                .then(response => response.json())
-                .then(data => {
-                    const status = data.status === 'ok' ? '✅ Healthy' : '❌ Issues';
-                    alert(`System Health: ${status}\nGo Server: Running\nDatabase: Connected`);
-                });
+        // Function to clear verification success state
+        function clearVerificationSuccess() {
+            console.log('🧹 Clearing verification success state...');
+            localStorage.removeItem('verificationSuccess');
+            localStorage.removeItem('verificationSession');
+            showToast('🧹 Verification state cleared', 'info');
+            
+            // Reload the page to reset to initial state
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        }
+        
+        // Helper function to show toast notifications
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+            
+            const toastId = 'toast-' + Date.now();
+            const toastHTML = `
+                <div id="${toastId}" class="toast align-items-center text-white bg-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} border-0" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `;
+            
+            toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+            
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement, {
+                autohide: true,
+                delay: 5000
+            });
+            toast.show();
+            
+            // Remove toast element after it's hidden
+            toastElement.addEventListener('hidden.bs.toast', () => {
+                toastElement.remove();
+            });
+        }
+        
+        // Helper function to create toast container if it doesn't exist
+        function createToastContainer() {
+            const container = document.createElement('div');
+            container.id = 'toastContainer';
+            container.className = 'toast-container position-fixed top-0 end-0 p-3';
+            container.style.zIndex = '9999';
+            document.body.appendChild(container);
+            return container;
         }
     </script>
 </body>

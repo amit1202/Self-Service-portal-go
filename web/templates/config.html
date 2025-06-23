@@ -131,6 +131,24 @@
                                                 </button>
                                                 <div id="sdo-test-result" class="test-result"></div>
                                             </div>
+                                            <div class="col-md-6">
+    <div class="mb-3">
+        <label class="form-label">Connection Status</label>
+        <div class="form-control-plaintext">
+            <span class="connection-status status-disconnected" id="sdo-status-indicator"></span>
+            <span id="sdo-status-text">Not Connected</span>
+        </div>
+    </div>
+    <div class="d-grid gap-2">
+        <button type="button" class="btn btn-outline-primary btn-custom" onclick="testSDOConnection()">
+            <i class="bi bi-check-circle me-1"></i>Test Connection
+        </button>
+        <button type="button" class="btn btn-outline-secondary btn-custom btn-sm" onclick="testStoredSDOConnection()">
+            <i class="bi bi-database-check me-1"></i>Test Stored Config
+        </button>
+    </div>
+    <div id="sdo-test-result" class="test-result"></div>
+</div>
                                         </div>
                                     </div>
 
@@ -806,5 +824,50 @@
                   'Go architecture provides excellent foundation! ⚡');
         }
     </script>
+    <!-- Your button should look like this in the config page HTML: -->
+
+<button type="button" class="btn btn-outline-primary mb-3 btn-custom" onclick="testSDOConnection()">
+    <i class="bi bi-check-circle me-1"></i>Test Connection
+</button>
+
+<!-- Alternative button with inline function for testing: -->
+<button type="button" class="btn btn-outline-info mb-3 btn-custom" onclick="testBasicFunction()">
+    <i class="bi bi-bug me-1"></i>Test Basic Function
+</button>
+
+<!-- jQuery event-based button for testing: -->
+<button type="button" id="test-sdo-jquery" class="btn btn-outline-warning mb-3 btn-custom">
+    <i class="bi bi-lightning me-1"></i>Test via jQuery
+</button>
+
+<script>
+// Inline script to test immediately
+console.log('🔍 Inline script running...');
+
+// Test basic onclick
+function testInlineFunction() {
+    console.log('✅ Inline function works!');
+    alert('✅ Inline function works!');
+}
+
+// Test jQuery binding
+$(document).ready(function() {
+    console.log('🔄 Document ready - binding jQuery event');
+    
+    $('#test-sdo-jquery').on('click', function() {
+        console.log('🔄 jQuery button clicked!');
+        alert('✅ jQuery event binding works!');
+        
+        // Now call the actual test
+        if (typeof testSDOConnection === 'function') {
+            console.log('🔄 Calling testSDOConnection...');
+            testSDOConnection();
+        } else {
+            console.error('❌ testSDOConnection function not found!');
+            alert('❌ testSDOConnection function not found!');
+        }
+    });
+});
+</script>
 </body>
 </html>

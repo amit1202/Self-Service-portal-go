@@ -355,7 +355,7 @@ function updateInvitationSectionVisibility(verification) {
     // Also update search results section if it exists
     if ($('#user-search-section').length) {
         const searchSection = $('#user-search-section');
-       /* if (isPassed) {
+        if (isPassed) {
             searchSection.removeClass('d-none');
             $('#search-disabled-message').addClass('d-none');
         } else {
@@ -365,7 +365,7 @@ function updateInvitationSectionVisibility(verification) {
                     '<i class="bi bi-exclamation-triangle-fill me-2"></i> ' +
                     'User search is disabled until your identity is verified.' +
                     '</div>');
-        } */
+        } 
     }
 }
 
@@ -1514,35 +1514,55 @@ $(document).ready(function() {
 
         // Make AJAX request to server endpoint
         $.ajax({
-            url: '/sdo-send-invitation',
+            url: '/api/sdo/invite',
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({
-                userId: userId,
+                userId: String(userId),
                 invitationTypes: invitationTypes
             }),
             success: function(response) {
-                console.log("Invitation success:", response);
+                console.log("=== INVITATION RESPONSE DEBUG ===");
+                console.log("Full response:", response);
+                console.log("Response type:", typeof response);
+                console.log("Response keys:", Object.keys(response));
+                
                 $('#invitation-result').html('<div class="alert alert-success">Invitation sent successfully</div>');
 
                 // Extract invitation details from the response
                 let invitationId = null;
                 let qrData = null;
 
+                // Check for invitation ID in the response (matching handler format)
+                if (response.id) {
+                    invitationId = response.id;
+                    qrData = response.id;
+                    console.log("✅ Found response.id:", invitationId);
+                } else if (response.invitationId) {
+                    invitationId = response.invitationId;
+                    qrData = response.invitationId;
+                    console.log("✅ Found response.invitationId:", invitationId);
+                }
+                // Check if we have invitationDetails
+                else if (response.invitationDetails && response.invitationDetails.id) {
+                    invitationId = response.invitationDetails.id;
+                    qrData = response.invitationDetails.id;
+                    console.log("✅ Found invitationDetails.id:", invitationId);
+                }
                 // Check if we have rawResponse with nested invitation data
-                if (response.rawResponse && response.rawResponse.invitation) {
+                else if (response.rawResponse && response.rawResponse.invitation) {
                     const invitation = response.rawResponse.invitation;
-                    console.log("Found invitation data:", invitation);
+                    console.log("Found invitation data in rawResponse:", invitation);
 
                     // Try to get invitationId (new format) or id (old format)
                     if (invitation.invitationId) {
                         invitationId = invitation.invitationId;
                         qrData = invitation.invitationId;
-                        console.log("Using invitationId:", invitationId);
+                        console.log("✅ Found rawResponse.invitation.invitationId:", invitationId);
                     } else if (invitation.id) {
                         invitationId = invitation.id;
                         qrData = invitation.id;
-                        console.log("Using id:", invitationId);
+                        console.log("✅ Found rawResponse.invitation.id:", invitationId);
                     }
                 }
                 // Fallback to try invitationDetails directly
@@ -1550,39 +1570,71 @@ $(document).ready(function() {
                     if (response.invitationDetails.id) {
                         invitationId = response.invitationDetails.id;
                         qrData = invitationId;
+                        console.log("✅ Found fallback invitationDetails.id:", invitationId);
                     }
                 }
 
+                console.log("=== EXTRACTION RESULT ===");
+                console.log("Final invitationId:", invitationId);
+                console.log("Final qrData:", qrData);
+
                 // If we have QR data, generate the QR code
                 if (qrData) {
+                    console.log("=== GENERATING QR CODE ===");
+                    console.log("Calling /api/sdo/qr with invitationId:", invitationId);
+                    
                     // Clear previous QR code
                     $('#qrcode').empty();
 
-                    // Get user ID for more detailed QR data
-                    const userId = $('#user-id').val().trim();
+                    // Call server's QR code generation endpoint with the invitation ID
+                    $.ajax({
+                        url: '/api/sdo/qr',
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            invitationId: invitationId
+                        }),
+                        success: function(qrResponse) {
+                            console.log("=== QR GENERATION RESPONSE ===");
+                            console.log("QR Response:", qrResponse);
+                            console.log("QR Response type:", typeof qrResponse);
+                            console.log("QR Response keys:", Object.keys(qrResponse));
+                            
+                            if (qrResponse.success && qrResponse.qr_data) {
+                                console.log("✅ QR generation successful");
+                                console.log("QR Data received:", qrResponse.qr_data);
+                                console.log("Invitation ID from QR response:", qrResponse.invitation_id);
+                                
+                                // Generate QR code with the server-provided data
+                                new QRCode(document.getElementById("qrcode"), {
+                                    text: qrResponse.qr_data,
+                                    width: 200,
+                                    height: 200,
+                                    colorDark: "#000000",
+                                    colorLight: "#ffffff",
+                                    correctLevel: QRCode.CorrectLevel.H
+                                });
 
-                    // Create enhanced QR data
-                    const enhancedQrData = JSON.stringify({
-                        invitationId: invitationId,
-                        userId: userId,
-                        type: 'octopus-invitation',
-                        timestamp: new Date().getTime()
+                                // Display invitation ID with enhanced styling
+                                $('#invitation-id').html(`
+                                    <span class="badge bg-primary p-2">Invitation ID: ${invitationId}</span>
+                                `);
+                            } else {
+                                console.log("❌ QR generation failed in response");
+                                $('#qrcode').html('<div class="alert alert-warning">Failed to generate QR code from server</div>');
+                                $('#invitation-id').text('');
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.log("=== QR GENERATION ERROR ===");
+                            console.log("Status:", xhr.status);
+                            console.log("Error:", error);
+                            console.log("Response text:", xhr.responseText);
+                            
+                            $('#qrcode').html('<div class="alert alert-warning">Failed to generate QR code from server</div>');
+                            $('#invitation-id').text('');
+                        }
                     });
-                    console.log("enhanced QR Data",enhancedQrData);
-                    // Generate QR code with enhanced data
-                    new QRCode(document.getElementById("qrcode"), {
-                        text: enhancedQrData,
-                        width: 200,
-                        height: 200,
-                        colorDark: "#000000",
-                        colorLight: "#ffffff",
-                        correctLevel: QRCode.CorrectLevel.H
-                    });
-
-                    // Display invitation ID with enhanced styling
-                    $('#invitation-id').html(`
-                        <span class="badge bg-primary p-2">Invitation ID: ${invitationId}</span>
-                    `);
                 } else {
                     // No data available for QR code - this shouldn't happen with the provided response format
                     $('#qrcode').html('<div class="alert alert-warning">Unable to generate QR code: No valid data found in response</div>');
