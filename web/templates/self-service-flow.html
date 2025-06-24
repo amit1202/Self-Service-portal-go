@@ -109,7 +109,7 @@
         }
         
         .btn-primary {
-            background: #000;
+            background: #FF9800;
             border: none;
             border-radius: 10px;
             padding: 12px 24px;
@@ -119,14 +119,14 @@
         }
         
         .btn-primary:hover {
-            background: #222;
+            background: #F57C00;
             color: #fff;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
         }
         
         .btn-success {
-            background: #000;
+            background: #FF9800;
             border: none;
             border-radius: 10px;
             padding: 12px 24px;
@@ -135,7 +135,18 @@
         }
         
         .btn-success:hover {
-            background: #222;
+            background: #F57C00;
+            color: #fff;
+        }
+        
+        .btn-dark {
+            background: #673AB7;
+            color: #fff;
+            border: none;
+        }
+        
+        .btn-dark:hover {
+            background: #512DA8;
             color: #fff;
         }
         
@@ -586,13 +597,6 @@
             background: #000;
             color: #fff;
         }
-        #step-1 .btn-primary {
-            background: #408CFF;
-            color: #fff;
-        }
-        #step-1 .btn-primary:hover {
-            background: #1A6ED8;
-        }
         #step-1 .form-label {
             color: #000;
         }
@@ -614,6 +618,11 @@
 </head>
 <body>
     <div class="flow-container">
+        <div class="d-flex justify-content-end mb-3">
+            <a href="/dashboard" class="btn btn-dark" style="border-radius: 10px; font-weight: 600;">
+                <i class="bi bi-speedometer2 me-2"></i>Dashboard
+            </a>
+        </div>
         <!-- Progress Bar -->
         <div class="progress-bar">
             <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
@@ -632,31 +641,8 @@
                 </div>
                 
                 <div class="row">
-                    <div class="col-md-6">
-                        <h5>Portal Login</h5>
-                        <form id="portal-login-form">
-                            <div class="mb-3">
-                                <label for="username" class="form-label">Username</label>
-                                <input type="text" class="form-control" id="username" name="username" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="password" class="form-label">Password</label>
-                                <input type="password" class="form-control" id="password" name="password" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-box-arrow-in-right me-2"></i>Login
-                            </button>
-                        </form>
-                        
-                        <div class="mt-3">
-                            <small class="text-muted">
-                                <strong>Demo Credentials:</strong><br>
-                                Username: <code>admin</code><br>
-                                Password: <code>admin</code>
-                            </small>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
+                    <!-- Removed Portal Login (left pane) -->
+                    <div class="col-md-12">
                         <h5>User Information</h5>
                         <form id="user-info-form">
                             <div class="mb-3">
@@ -689,6 +675,28 @@
                 </div>
             </div>
         </div>
+        <script>
+          // Automatically perform portal login with admin/admin when the page loads
+          $(document).ready(function() {
+            $.ajax({
+              url: '/api/auth/login',
+              method: 'POST',
+              contentType: 'application/json',
+              data: JSON.stringify({ username: 'admin', password: 'admin' }),
+              success: function(response) {
+                if (response.success) {
+                  showAlert(1, 'success', 'Portal login successful!');
+                  markStepComplete(1);
+                } else {
+                  showAlert(1, 'danger', response.error || 'Portal login failed.');
+                }
+              },
+              error: function(xhr) {
+                showAlert(1, 'danger', 'Portal login failed.');
+              }
+            });
+          });
+        </script>
         
         <!-- Step 2: Search User -->
         <div class="flow-step hidden" id="step-2">
@@ -2178,7 +2186,29 @@
         }
     </script>
     <script>
-      window.SDO_CONFIG = {{ .SDOConfigJSON }};
+      window.SDO_CONFIG = JSON.parse('{{ .SDOConfigJSON }}');
+    </script>
+    <script>
+      // Automatically perform portal login with admin/admin when the page loads
+      $(document).ready(function() {
+        $.ajax({
+          url: '/api/auth/login',
+          method: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({ username: 'admin', password: 'admin' }),
+          success: function(response) {
+            if (response.success) {
+              showAlert(1, 'success', 'Portal login successful!');
+              markStepComplete(1);
+            } else {
+              showAlert(1, 'danger', response.error || 'Portal login failed.');
+            }
+          },
+          error: function(xhr) {
+            showAlert(1, 'danger', 'Portal login failed.');
+          }
+        });
+      });
     </script>
 </body>
 </html> 
