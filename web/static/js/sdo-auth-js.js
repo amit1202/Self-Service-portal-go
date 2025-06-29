@@ -4,6 +4,7 @@ let authToken = null;
 let invitationsSent = 0;
 let qrCodesGenerated = 0;
 let usersFound = 0;
+var sdoEnrollmentStarted = false;
 
 // Test invitation ID from the user
 const TEST_INVITATION_ID = "018fc8bbcD5SLtUzkD33ykrzXpYaEYGWbw1ksgukLVNGniSpQhQR6p6tcSo5WNDqq21bPjeU";
@@ -3588,3 +3589,234 @@ console.log('- debugSDOSession() - Complete session debugging popup');
 console.log('- resetSDOAuth() - Reset all authentication state');
 console.log('- checkAuthStatus() - Enhanced authentication status check');
 console.log('- updateDebugStatus() - Update debug status indicators');
+
+// Add date of birth validation
+function isValidDateOfBirth(dob) {
+    // Accepts YYYY-MM-DD, must be in the past and reasonable (not before 1900)
+    if (!dob) return false;
+    const date = new Date(dob);
+    const now = new Date();
+    if (isNaN(date.getTime())) return false;
+    if (date > now) return false;
+    if (date.getFullYear() < 1900) return false;
+    return true;
+}
+
+function goToStep(step) {
+    // ... existing code ...
+    // Show/hide steps logic
+    // ... existing code ...
+    if (step === 7) {
+        if (!sdoEnrollmentStarted) {
+            sdoEnrollmentStarted = true;
+            if (typeof startEnrollment === 'function') {
+                startEnrollment();
+            } else if (typeof sendInvitation === 'function') {
+                sendInvitation();
+            } else {
+                console.warn('No SDO enrollment function found for Step 7');
+            }
+        }
+    } else {
+        sdoEnrollmentStarted = false;
+    }
+    // ... existing code ...
+}
+
+// ... existing code ...
+function toggleComparisonBlock() {
+    const block = document.getElementById('comparison-block');
+    const btn = document.getElementById('show-details-btn');
+    if (block.style.display === 'none' || block.style.display === '') {
+        block.style.display = 'flex';
+        btn.innerHTML = '<i class="bi bi-eye-slash me-2"></i>Hide Details';
+    } else {
+        block.style.display = 'none';
+        btn.innerHTML = '<i class="bi bi-eye me-2"></i>Show Details';
+    }
+}
+// ... existing code ...
+
+// After successful verification in Step 3, show the comparison block and next button
+function showComparisonAfterVerification(au10tixData) {
+    populateComparisonBlock(au10tixData);
+    document.getElementById('comparison-block').style.display = 'flex';
+    document.getElementById('enrollment-next-btn').style.display = 'block';
+}
+
+function showComparisonBlock() {
+    // Show both comparison blocks
+    $('#comparison-block').show();
+    $('#comparison-analysis').show();
+    
+    // Populate the basic comparison
+    $('#entered-firstname').text(userData.firstName || 'N/A');
+    $('#entered-lastname').text(userData.lastName || 'N/A');
+    $('#entered-email').text(userData.email || 'N/A');
+    $('#entered-phone').text(userData.phone || 'N/A');
+    $('#entered-dob').text(userData.dateOfBirth || 'N/A');
+    $('#entered-idnumber').text(userData.idNumber || 'N/A');
+    
+    $('#verified-firstname').text(verificationData.firstName || 'N/A');
+    $('#verified-lastname').text(verificationData.lastName || 'N/A');
+    $('#verified-dob').text(verificationData.dateOfBirth || 'N/A');
+    $('#verified-id').text(verificationData.idNumber || 'N/A');
+    
+    // Enhanced comparison analysis
+    let matchCount = 0;
+    const totalFields = 4; // firstName, lastName, dateOfBirth, idNumber
+    
+    // First Name comparison
+    const firstNameMatch = compareStrings(userData.firstName, verificationData.firstName);
+    $('#analysis-firstname-entered').text(userData.firstName || 'N/A');
+    $('#analysis-firstname-verified').text(verificationData.firstName || 'N/A');
+    if (firstNameMatch) {
+        $('#firstname-status').html('<span class="badge bg-success"><i class="bi bi-check-circle"></i> Match</span>');
+        $('#firstname-match').addClass('table-success');
+        matchCount++;
+    } else {
+        $('#firstname-status').html('<span class="badge bg-danger"><i class="bi bi-x-circle"></i> Mismatch</span>');
+        $('#firstname-match').addClass('table-danger');
+    }
+    
+    // Last Name comparison
+    const lastNameMatch = compareStrings(userData.lastName, verificationData.lastName);
+    $('#analysis-lastname-entered').text(userData.lastName || 'N/A');
+    $('#analysis-lastname-verified').text(verificationData.lastName || 'N/A');
+    if (lastNameMatch) {
+        $('#lastname-status').html('<span class="badge bg-success"><i class="bi bi-check-circle"></i> Match</span>');
+        $('#lastname-match').addClass('table-success');
+        matchCount++;
+    } else {
+        $('#lastname-status').html('<span class="badge bg-danger"><i class="bi bi-x-circle"></i> Mismatch</span>');
+        $('#lastname-match').addClass('table-danger');
+    }
+    
+    // Date of Birth comparison
+    const dobMatch = compareStrings(userData.dateOfBirth, verificationData.dateOfBirth);
+    $('#analysis-dob-entered').text(userData.dateOfBirth || 'N/A');
+    $('#analysis-dob-verified').text(verificationData.dateOfBirth || 'N/A');
+    if (dobMatch) {
+        $('#dob-status').html('<span class="badge bg-success"><i class="bi bi-check-circle"></i> Match</span>');
+        $('#dob-match').addClass('table-success');
+        matchCount++;
+    } else {
+        $('#dob-status').html('<span class="badge bg-danger"><i class="bi bi-x-circle"></i> Mismatch</span>');
+        $('#dob-match').addClass('table-danger');
+    }
+    
+    // ID Number comparison
+    const idNumberMatch = compareStrings(userData.idNumber, verificationData.idNumber);
+    $('#analysis-idnumber-entered').text(userData.idNumber || 'N/A');
+    $('#analysis-idnumber-verified').text(verificationData.idNumber || 'N/A');
+    if (idNumberMatch) {
+        $('#idnumber-status').html('<span class="badge bg-success"><i class="bi bi-check-circle"></i> Match</span>');
+        $('#idnumber-match').addClass('table-success');
+        matchCount++;
+    } else {
+        $('#idnumber-status').html('<span class="badge bg-danger"><i class="bi bi-x-circle"></i> Mismatch</span>');
+        $('#idnumber-match').addClass('table-danger');
+    }
+    
+    // Summary
+    $('#match-count').html(`<strong>${matchCount} of ${totalFields} fields match</strong>`);
+    
+    if (matchCount === totalFields) {
+        $('#overall-status').removeClass('alert-danger alert-warning').addClass('alert-success')
+            .html('<i class="bi bi-check-circle-fill"></i> <strong>Verification Passed</strong><br>All fields match successfully');
+    } else if (matchCount > 0) {
+        $('#overall-status').removeClass('alert-success alert-danger').addClass('alert-warning')
+            .html('<i class="bi bi-exclamation-triangle-fill"></i> <strong>Partial Match</strong><br>Some fields do not match');
+    } else {
+        $('#overall-status').removeClass('alert-success alert-warning').addClass('alert-danger')
+            .html('<i class="bi bi-x-circle-fill"></i> <strong>Verification Failed</strong><br>No fields match');
+    }
+    
+    // Show the next button
+    $('#enrollment-next-btn').show();
+}
+
+// Helper function to compare strings (case-insensitive, trim whitespace)
+function compareStrings(str1, str2) {
+    if (!str1 && !str2) return true; // Both empty/null
+    if (!str1 || !str2) return false; // One is empty/null
+    
+    return str1.toString().trim().toLowerCase() === str2.toString().trim().toLowerCase();
+}
+
+// Add dual enrollment functions for Step 4
+function enrollOctopus() {
+    $('#octopus-enrollment-area').hide();
+    $('#fido-enrollment-area').hide();
+    $('#step-4-alerts').html('');
+    
+    $.ajax({
+        url: '/api/sdo/invite',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            email: userData.email,
+            userId: userData.id,
+            type: 'OCTOPUS'
+        }),
+        success: function(response) {
+            console.log('OCTOPUS invitation response:', response);
+            
+            // Check for the new response format
+            const invitationId = response.octopus_invitationId || response.invitationId;
+            
+            if (invitationId) {
+                $('#octopus-invitation-id').text(invitationId);
+                // Generate QR code for OCTOPUS
+                const qrUrl = 'https://doubleoctopus.com/enroll?code=' + invitationId;
+                $('#octopus-qr-code-image').attr('src', 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(qrUrl));
+                $('#octopus-enrollment-area').show();
+                $('#fido-enrollment-area').hide();
+                $('#step-4-alerts').html('<div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>OCTOPUS invitation sent successfully!</div>');
+            } else {
+                $('#step-4-alerts').html('<div class="alert alert-danger"><i class="bi bi-x-circle me-2"></i>Failed to send OCTOPUS invitation: ' + (response.octopus_error || 'No invitation ID received') + '</div>');
+            }
+        },
+        error: function(xhr) {
+            console.error('OCTOPUS invitation error:', xhr);
+            $('#step-4-alerts').html('<div class="alert alert-danger"><i class="bi bi-x-circle me-2"></i>Server error sending OCTOPUS invitation.</div>');
+        }
+    });
+}
+
+function enrollFIDO() {
+    $('#octopus-enrollment-area').hide();
+    $('#fido-enrollment-area').hide();
+    $('#step-4-alerts').html('');
+    
+    $.ajax({
+        url: '/api/sdo/invite',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            email: userData.email,
+            userId: userData.id,
+            type: 'FIDO'
+        }),
+        success: function(response) {
+            console.log('FIDO invitation response:', response);
+            
+            // Check for the new response format
+            const invitationId = response.fido_invitationId || response.invitationId;
+            
+            if (invitationId) {
+                const fidoLink = 'https://amitmt.doubleoctopus.io?invitation=' + invitationId;
+                $('#fido-invitation-link').html('<a href="' + fidoLink + '" target="_blank" class="btn btn-primary">' + fidoLink + '</a>');
+                $('#fido-enrollment-area').show();
+                $('#octopus-enrollment-area').hide();
+                $('#step-4-alerts').html('<div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>FIDO invitation sent successfully!</div>');
+            } else {
+                $('#step-4-alerts').html('<div class="alert alert-danger"><i class="bi bi-x-circle me-2"></i>Failed to send FIDO invitation: ' + (response.fido_error || 'No invitation ID received') + '</div>');
+            }
+        },
+        error: function(xhr) {
+            console.error('FIDO invitation error:', xhr);
+            $('#step-4-alerts').html('<div class="alert alert-danger"><i class="bi bi-x-circle me-2"></i>Server error sending FIDO invitation.</div>');
+        }
+    });
+}

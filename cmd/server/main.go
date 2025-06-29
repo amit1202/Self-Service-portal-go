@@ -14,6 +14,8 @@ import (
 
 	"self-service-portal/internal/config"
 
+	"runtime/debug"
+
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
@@ -66,6 +68,17 @@ func main() {
 		}
 	}()
 	log.Println("🔄 Started verification session cleanup background task")
+
+	// Add custom recovery middleware to log panics
+	r.Use(func(c *gin.Context) {
+		defer func() {
+			if err := recover(); err != nil {
+				log.Printf("[PANIC RECOVERED] %v\n%s", err, debug.Stack())
+				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Internal server error (panic caught)"})
+			}
+		}()
+		c.Next()
+	})
 
 	// Public routes
 	log.Println("Setting up public routes...")
@@ -226,8 +239,8 @@ func main() {
 	// Wait for interrupt signal to gracefully shutdown the server
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-	log.Println("Shutting down server...")
+	sig := <-quit
+	log.Printf("Shutting down server... (signal: %v)", sig)
 
 	// Give outstanding requests a deadline for completion
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

@@ -324,6 +324,27 @@ func (h *VerificationHandler) createAu10tixSession(config *PortalConfig, jwtPayl
 		},
 	}
 
+	// Add user data if present
+	userDataMap := map[string]interface{}{}
+	if userData.FirstName != "" {
+		userDataMap["firstName"] = userData.FirstName
+	}
+	if userData.LastName != "" {
+		userDataMap["lastName"] = userData.LastName
+	}
+	if userData.Email != "" {
+		userDataMap["email"] = userData.Email
+	}
+	if userData.PhoneNumber != "" {
+		userDataMap["phoneNumber"] = userData.PhoneNumber
+	}
+	if userData.DateOfBirth != "" {
+		userDataMap["dateOfBirth"] = userData.DateOfBirth
+	}
+	if len(userDataMap) > 0 {
+		workflowRequest["userData"] = userDataMap
+	}
+
 	jsonData, err := json.Marshal(workflowRequest)
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to marshal workflow request: %w", err)
@@ -682,6 +703,13 @@ func (h *VerificationHandler) GetVerificationStatus(c *gin.Context) {
 			"session_id":  session.Au10tixSession.SessionID,
 			"session_url": session.Au10tixSession.SessionURL,
 			"status":      session.Au10tixSession.Status,
+		}
+	}
+
+	// Enhanced logging: print full Au10tix verification data as pretty JSON
+	if session.Data != nil {
+		if pretty, err := json.MarshalIndent(session.Data, "", "  "); err == nil {
+			log.Printf("\n========== Au10tix Verification Data for session %s =========\n%s\n============================================================", sessionID, string(pretty))
 		}
 	}
 

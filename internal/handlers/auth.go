@@ -1103,7 +1103,7 @@ func min(a, b int) int {
 	return b
 }
 
-// SendInvitation sends an invitation to a user
+// SendInvitation sends an invitation to a user (OCTOPUS, FIDO, or both)
 func (h *AuthHandler) SendInvitation(c *gin.Context) {
 	session := sessions.Default(c)
 	authData := h.getAuthDataFromSession(session)
@@ -1118,6 +1118,7 @@ func (h *AuthHandler) SendInvitation(c *gin.Context) {
 	var req struct {
 		Email  string      `json:"email" binding:"required"`
 		UserID json.Number `json:"userId" binding:"required"`
+		Type   string      `json:"type"` // Optional: "OCTOPUS", "FIDO", or empty for both
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -1126,31 +1127,44 @@ func (h *AuthHandler) SendInvitation(c *gin.Context) {
 	}
 
 	userIDStr := req.UserID.String()
-	log.Printf("✉️ Send Invitation request received for email: %s, User ID: %s", req.Email, userIDStr)
+	log.Printf("✉️ Send Invitation request received for email: %s, User ID: %s, Type: %s", req.Email, userIDStr, req.Type)
 
-	invitation, err := sdoService.SendInvitation(userIDStr, "OCTOPUS")
-	if err != nil {
-		log.Printf("❌ Error sending invitation: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "Failed to send invitation: " + err.Error()})
-		return
+	var octopusInvitation, fidoInvitation *services.SDOInvitationDetails
+	var err error
+	var results = gin.H{"success": true}
+
+	if req.Type == "OCTOPUS" || req.Type == "" {
+		octopusInvitation, err = sdoService.SendInvitation(userIDStr, "OCTOPUS")
+		if err != nil {
+			log.Printf("❌ Error sending OCTOPUS invitation: %v", err)
+			results["octopus_error"] = err.Error()
+		} else {
+			results["octopus_invitationId"] = octopusInvitation.InvitationID
+			results["octopus_status"] = octopusInvitation.Status
+			results["octopus_message"] = octopusInvitation.Message
+		}
 	}
 
-	log.Printf("✅ Invitation sent successfully: ID %s", invitation.ID)
+	if req.Type == "FIDO" || req.Type == "" {
+		fidoInvitation, err = sdoService.SendInvitation(userIDStr, "FIDO")
+		if err != nil {
+			log.Printf("❌ Error sending FIDO invitation: %v", err)
+			results["fido_error"] = err.Error()
+		} else {
+			results["fido_invitationId"] = fidoInvitation.InvitationID
+			results["fido_status"] = fidoInvitation.Status
+			results["fido_message"] = fidoInvitation.Message
+		}
+	}
 
-	// Call the SDO publications API and wait 3 seconds
+	// Publish after sending invitations
 	if err := sdoService.Publish(); err != nil {
 		log.Printf("❌ Error publishing after invitation: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "Failed to publish after invitation: " + err.Error()})
-		return
+		results["publish_error"] = err.Error()
 	}
 	time.Sleep(3 * time.Second)
 
-	c.JSON(http.StatusOK, gin.H{
-		"success":      true,
-		"status":       invitation.Status,
-		"invitationId": invitation.InvitationID,
-		"message":      invitation.Message,
-	})
+	c.JSON(http.StatusOK, results)
 }
 
 // GenerateQRCode generates a QR code for enrollment

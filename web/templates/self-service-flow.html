@@ -661,6 +661,14 @@
                                 <label for="user-phone" class="form-label">Phone Number</label>
                                 <input type="tel" class="form-control" id="user-phone" name="phoneNumber">
                             </div>
+                            <div class="mb-3">
+                                <label for="user-dob" class="form-label">Date of Birth</label>
+                                <input type="date" class="form-control" id="user-dob" name="dateOfBirth" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="user-idnumber" class="form-label">ID Number</label>
+                                <input type="text" class="form-control" id="user-idnumber" name="idNumber" required>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -826,6 +834,98 @@
                 </div>
                 
                 <div id="step-3-alerts"></div>
+                <!-- Comparison block: show after verification complete -->
+                <div class="row mt-4" id="comparison-block" style="display: none;">
+                  <div class="col-md-6">
+                    <h5><i class="bi bi-person me-2"></i>User Entered Information</h5>
+                    <ul class="list-group">
+                      <li class="list-group-item"><strong>First Name:</strong> <span id="entered-firstname"></span></li>
+                      <li class="list-group-item"><strong>Last Name:</strong> <span id="entered-lastname"></span></li>
+                      <li class="list-group-item"><strong>Email:</strong> <span id="entered-email"></span></li>
+                      <li class="list-group-item"><strong>Phone:</strong> <span id="entered-phone"></span></li>
+                      <li class="list-group-item"><strong>Date of Birth:</strong> <span id="entered-dob"></span></li>
+                      <li class="list-group-item"><strong>ID Number:</strong> <span id="entered-idnumber"></span></li>
+                    </ul>
+                  </div>
+                  <div class="col-md-6">
+                    <h5><i class="bi bi-shield-check me-2"></i>Au10tix Verification Result</h5>
+                    <ul class="list-group">
+                      <li class="list-group-item"><strong>First Name:</strong> <span id="verified-firstname"></span></li>
+                      <li class="list-group-item"><strong>Last Name:</strong> <span id="verified-lastname"></span></li>
+                      <li class="list-group-item"><strong>Date of Birth:</strong> <span id="verified-dob"></span></li>
+                      <li class="list-group-item"><strong>ID Number:</strong> <span id="verified-id"></span></li>
+                    </ul>
+                  </div>
+                </div>
+                
+                <!-- Enhanced Comparison Analysis -->
+                <div class="row mt-4" id="comparison-analysis" style="display: none;">
+                  <div class="col-12">
+                    <div class="card">
+                      <div class="card-header">
+                        <h5><i class="bi bi-search me-2"></i>Verification Analysis</h5>
+                      </div>
+                      <div class="card-body">
+                        <div class="row">
+                          <div class="col-md-8">
+                            <table class="table table-sm">
+                              <thead>
+                                <tr>
+                                  <th>Field</th>
+                                  <th>User Entered</th>
+                                  <th>Verified</th>
+                                  <th>Status</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr id="firstname-match">
+                                  <td><strong>First Name</strong></td>
+                                  <td id="analysis-firstname-entered"></td>
+                                  <td id="analysis-firstname-verified"></td>
+                                  <td id="firstname-status"></td>
+                                </tr>
+                                <tr id="lastname-match">
+                                  <td><strong>Last Name</strong></td>
+                                  <td id="analysis-lastname-entered"></td>
+                                  <td id="analysis-lastname-verified"></td>
+                                  <td id="lastname-status"></td>
+                                </tr>
+                                <tr id="dob-match">
+                                  <td><strong>Date of Birth</strong></td>
+                                  <td id="analysis-dob-entered"></td>
+                                  <td id="analysis-dob-verified"></td>
+                                  <td id="dob-status"></td>
+                                </tr>
+                                <tr id="idnumber-match">
+                                  <td><strong>ID Number</strong></td>
+                                  <td id="analysis-idnumber-entered"></td>
+                                  <td id="analysis-idnumber-verified"></td>
+                                  <td id="idnumber-status"></td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                          <div class="col-md-4">
+                            <div class="verification-summary">
+                              <h6><i class="bi bi-clipboard-check me-2"></i>Summary</h6>
+                              <div id="match-count" class="mb-2"></div>
+                              <div id="overall-status" class="alert mb-2"></div>
+                              <div class="small text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                All fields must match for verification to pass
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="mt-4 text-center" id="enrollment-next-btn" style="display: none;">
+                  <button class="btn btn-success" onclick="proceedToStep4()">
+                    <i class="bi bi-arrow-right me-2"></i>Next: Enrollment
+                  </button>
+                </div>
                 
                 <div class="step-navigation">
                     <button class="btn btn-secondary" onclick="goToStep(2)">
@@ -851,9 +951,29 @@
                 </div>
                 
                 <div id="enrollment-container">
-                    <div class="text-center">
-                        <div class="loading-spinner"></div>
-                        <p class="mt-2">Sending invitation and generating QR code...</p>
+                    <div class="text-center mb-4">
+                        <button class="btn btn-primary me-3" id="enroll-octopus-btn" onclick="enrollOctopus()">
+                            <i class="bi bi-phone me-2"></i>Enroll with Mobile (OCTOPUS)
+                        </button>
+                        <button class="btn btn-dark" id="enroll-fido-btn" onclick="enrollFIDO()">
+                            <i class="bi bi-fingerprint me-2"></i>Enroll with FIDO
+                        </button>
+                    </div>
+                    <div id="octopus-enrollment-area" class="mb-4" style="display:none;">
+                        <h5><i class="bi bi-qr-code me-2"></i>Scan QR Code to Enroll (Mobile)</h5>
+                        <div class="qr-container">
+                            <img id="octopus-qr-code-image" class="qr-code" alt="OCTOPUS QR Code">
+                            <div class="mt-3">
+                                <p><strong>Invitation ID:</strong> <code id="octopus-invitation-id"></code></p>
+                                <p class="text-muted">Scan this QR code with your mobile device to complete enrollment</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="fido-enrollment-area" class="mb-4" style="display:none;">
+                        <h5><i class="bi bi-fingerprint me-2"></i>FIDO Enrollment Link</h5>
+                        <div class="alert alert-info">
+                            <span id="fido-invitation-link"></span>
+                        </div>
                     </div>
                 </div>
                 
@@ -865,28 +985,6 @@
                     <button class="btn btn-warning" onclick="retryEnrollment()">
                         <i class="bi bi-arrow-clockwise me-2"></i>Retry Enrollment
                     </button>
-                </div>
-                
-                <div id="qr-code-container" class="hidden">
-                    <h5><i class="bi bi-qr-code me-2"></i>Scan QR Code to Enroll</h5>
-                    <div class="qr-container">
-                        <img id="qr-code-image" class="qr-code" alt="QR Code">
-                        <div class="mt-3">
-                            <p><strong>Invitation ID:</strong> <code id="invitation-id"></code></p>
-                            <p class="text-muted">Scan this QR code with your mobile device to complete enrollment</p>
-                        </div>
-                    </div>
-                    
-                    <div class="alert alert-success">
-                        <i class="bi bi-check-circle me-2"></i>
-                        <strong>Enrollment Invitation Sent Successfully!</strong>
-                        <ul class="mb-0 mt-2">
-                            <li>An invitation has been sent to your email address</li>
-                            <li>You can scan the QR code above with your mobile device</li>
-                            <li>Or check your email for the invitation link</li>
-                            <li>Complete the enrollment on your mobile device</li>
-                        </ul>
-                    </div>
                 </div>
                 
                 <div id="step-4-alerts"></div>
@@ -953,7 +1051,6 @@
                         <i class="bi bi-check-circle me-2"></i>
                         Self-Service Portal Process Completed Successfully!
                     </div>
-                    
                     <div class="mt-4">
                         <h5>What was accomplished:</h5>
                         <div class="row mt-3">
@@ -991,7 +1088,6 @@
                             </div>
                         </div>
                     </div>
-                    
                     <div class="mt-4">
                         <button class="btn btn-primary" onclick="restartProcess()">
                             <i class="bi bi-arrow-clockwise me-2"></i>Start New Process
@@ -1001,9 +1097,97 @@
                         </button>
                     </div>
                 </div>
+                <!-- Comparison block hidden by default -->
+                <div class="row mt-4" id="comparison-block" style="display: none;">
+                    <div class="col-md-6">
+                        <h5>User Entered Information</h5>
+                        <ul class="list-group">
+                            <li class="list-group-item"><strong>First Name:</strong> <span id="entered-firstname"></span></li>
+                            <li class="list-group-item"><strong>Last Name:</strong> <span id="entered-lastname"></span></li>
+                            <li class="list-group-item"><strong>Email:</strong> <span id="entered-email"></span></li>
+                            <li class="list-group-item"><strong>Phone:</strong> <span id="entered-phone"></span></li>
+                            <li class="list-group-item"><strong>Date of Birth:</strong> <span id="entered-dob"></span></li>
+                            <li class="list-group-item"><strong>ID Number:</strong> <span id="entered-idnumber"></span></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Au10tix Verification Result</h5>
+                        <ul class="list-group">
+                            <li class="list-group-item"><strong>First Name:</strong> <span id="verified-firstname"></span></li>
+                            <li class="list-group-item"><strong>Last Name:</strong> <span id="verified-lastname"></span></li>
+                            <li class="list-group-item"><strong>Date of Birth:</strong> <span id="verified-dob"></span></li>
+                            <li class="list-group-item"><strong>ID Number:</strong> <span id="verified-id"></span></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-4 text-center" id="enrollment-next-btn" style="display: none;">
+                  <button class="btn btn-success" onclick="goToStep(4)">
+                    <i class="bi bi-arrow-right me-2"></i>Next: Enrollment
+                  </button>
+                </div>
             </div>
         </div>
-    </div>
+        <!-- Step 7: SDO Enrollment -->
+        <div class="flow-step hidden" id="step-7">
+            <div class="step-header">
+                <h3><i class="bi bi-phone me-2"></i>Step 7: SDO Enrollment</h3>
+                <div class="step-number">7</div>
+            </div>
+            <div class="step-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Setting up Secret Double Octopus enrollment (SDO already authenticated in Step 1)...
+                </div>
+                
+                <div id="enrollment-container">
+                    <div class="text-center mb-4">
+                        <button class="btn btn-primary me-3" id="enroll-octopus-btn" onclick="enrollOctopus()">
+                            <i class="bi bi-phone me-2"></i>Enroll with Mobile (OCTOPUS)
+                        </button>
+                        <button class="btn btn-dark" id="enroll-fido-btn" onclick="enrollFIDO()">
+                            <i class="bi bi-fingerprint me-2"></i>Enroll with FIDO
+                        </button>
+                    </div>
+                    <div id="octopus-enrollment-area" class="mb-4" style="display:none;">
+                        <h5><i class="bi bi-qr-code me-2"></i>Scan QR Code to Enroll (Mobile)</h5>
+                        <div class="qr-container">
+                            <img id="octopus-qr-code-image" class="qr-code" alt="OCTOPUS QR Code">
+                            <div class="mt-3">
+                                <p><strong>Invitation ID:</strong> <code id="octopus-invitation-id"></code></p>
+                                <p class="text-muted">Scan this QR code with your mobile device to complete enrollment</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="fido-enrollment-area" class="mb-4" style="display:none;">
+                        <h5><i class="bi bi-fingerprint me-2"></i>FIDO Enrollment Link</h5>
+                        <div class="alert alert-info">
+                            <span id="fido-invitation-link"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="enrollment-error" class="hidden">
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Enrollment Error:</strong> <span id="enrollment-error-message"></span>
+                    </div>
+                    <button class="btn btn-warning" onclick="retryEnrollment()">
+                        <i class="bi bi-arrow-clockwise me-2"></i>Retry Enrollment
+                    </button>
+                </div>
+                
+                <div id="step-4-alerts"></div>
+                
+                <div class="step-navigation">
+                    <button class="btn btn-secondary" onclick="goToStep(3)">
+                        <i class="bi bi-arrow-left me-2"></i>Previous
+                    </button>
+                    <button class="btn btn-primary" onclick="proceedToStep5()" id="step-4-next" disabled>
+                        <i class="bi bi-arrow-right me-2"></i>Next: Test Authentication
+                    </button>
+                </div>
+            </div>
+        </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -1096,6 +1280,8 @@
                     $('#user-firstname').val(data.firstName || '');
                     $('#user-lastname').val(data.lastName || '');
                     $('#user-phone').val(data.phoneNumber || '');
+                    $('#user-dob').val(data.dateOfBirth || '');
+                    $('#user-idnumber').val(data.idNumber || '');
                     
                     console.log('Loaded saved user data');
                 } catch (e) {
@@ -1119,7 +1305,7 @@
         function updateProgress() {
             // Calculate progress based on completed steps
             const completedSteps = Object.values(stepCompletionStatus).filter(Boolean).length;
-            const progress = (completedSteps / 5) * 100;
+            const progress = (completedSteps / 7) * 100;
             $('#progress-fill').css('width', progress + '%');
             
             // Update step visual indicators
@@ -1128,7 +1314,7 @@
         
         function updateStepIndicators() {
             // Update each step's visual state
-            for (let step = 1; step <= 6; step++) {
+            for (let step = 1; step <= 7; step++) {
                 const stepElement = $(`#step-${step}`);
                 const headerElement = stepElement.find('.step-header');
                 const numberElement = stepElement.find('.step-number');
@@ -1161,7 +1347,7 @@
         
         function goToStep(step) {
             // Validate step number
-            if (step < 1 || step > 6) {
+            if (step < 1 || step > 7) {
                 console.error('Invalid step number:', step);
                 return;
             }
@@ -1291,6 +1477,7 @@
             const firstName = $('#user-firstname').val().trim();
             const lastName = $('#user-lastname').val().trim();
             const phoneNumber = $('#user-phone').val().trim();
+            const dateOfBirth = $('#user-dob').val().trim();
             
             // Validate required fields
             if (!email) {
@@ -1324,12 +1511,21 @@
                 return;
             }
             
+            // Validate date of birth if provided
+            if (dateOfBirth && !isValidDateOfBirth(dateOfBirth)) {
+                showAlert(1, 'danger', 'Please enter a valid date of birth');
+                $('#user-dob').focus();
+                return;
+            }
+            
             // Store user data
             userData = {
                 email: email,
                 firstName: firstName,
                 lastName: lastName,
-                phoneNumber: phoneNumber
+                phoneNumber: phoneNumber,
+                dateOfBirth: dateOfBirth,
+                idNumber: $('#user-idnumber').val()
             };
             
             // Save to localStorage
@@ -1538,7 +1734,8 @@
                 firstName: userData.firstName,
                 lastName: userData.lastName,
                 email: userData.email,
-                phoneNumber: userData.phoneNumber
+                phoneNumber: userData.phoneNumber,
+                dateOfBirth: userData.dateOfBirth
             };
             
             $.ajax({
@@ -1707,12 +1904,21 @@
                     if (response.success) {
                         const status = response.status;
                         const result = response.result;
-                        
+                        // If verification is complete, show comparison and go to step 4
                         if (status === 'completed' || result === 'verified') {
                             showAlert(3, 'success', 'Verification completed successfully!');
                             $('#step-3-next').prop('disabled', false);
                             markStepComplete(3);
                             stopAutoStatusCheck();
+                            // Populate comparison block and go to step 4
+                            if (response.data && response.data.sessionResult) {
+                                populateComparisonBlock(response.data.sessionResult);
+                            } else if (response.data) {
+                                populateComparisonBlock(response.data);
+                            } else {
+                                populateComparisonBlock(null);
+                            }
+                            //goToStep(4);
                         } else if (status === 'failed' || result === 'failed') {
                             showAlert(3, 'danger', 'Verification failed. Please try again.');
                             $('#step-3-next').prop('disabled', true);
@@ -1727,6 +1933,9 @@
                                     $('#step-3-next').prop('disabled', false);
                                     markStepComplete(3);
                                     stopAutoStatusCheck();
+                                    // Populate comparison block and go to step 4
+                                    populateComparisonBlock(sessionResult);
+                                    //goToStep(4);
                                 } else {
                                     showAlert(3, 'warning', 'Verification still in progress. Please complete the process and try again.');
                                 }
@@ -1766,60 +1975,17 @@
         }
         
         function startEnrollment() {
-            // Show loading state
-            $('#enrollment-container').removeClass('hidden');
-            $('#qr-code-container').addClass('hidden');
-            $('#enrollment-error').addClass('hidden');
-            
-            // Disable next button during enrollment
-            $('#step-4-next').prop('disabled', true);
-            
             // Clear any previous alerts
             $('#step-4-alerts').empty();
             
             console.log('Starting SDO enrollment for user:', userData.email);
             
-            // Send invitation directly since SDO is already authenticated
-            sendInvitation();
+            // Show the dual enrollment options instead of auto-sending invitation
+            $('#enrollment-container').show();
+            $('#enrollment-error').hide();
+            $('#qr-code-container').hide();
         }
         
-        function sendInvitation() {
-            console.log('Sending invitation to:', userData.email);
-            
-            $.ajax({
-                url: '/api/sdo/invite',
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({
-                    email: userData.email,
-                    userId: userData.id,
-                    invitationTypes: ['MOBILE'] // Or whatever types you need
-                }),
-                timeout: 20000,
-                success: function(response) {
-                    console.log('Invitation response:', response);
-                    if (response.success && response.invitationId) {
-                        invitationId = response.invitationId;
-                        console.log('Invitation sent successfully. ID:', invitationId);
-                        // Now, generate the QR code with the new ID
-                        generateQRCode(invitationId);
-                    } else {
-                        console.error('Failed to send invitation:', response);
-                        showEnrollmentError(response.error || 'Could not get a valid invitation ID.');
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('Invitation error:', { status, error, xhr });
-                    let errorMessage = 'Failed to send invitation. Please try again.';
-                    if (status === 'timeout') {
-                        errorMessage = 'Invitation request timed out.';
-                    } else if (xhr.status === 500) {
-                        errorMessage = 'Server error during invitation.';
-                    }
-                    showEnrollmentError(errorMessage);
-                }
-            });
-        }
 
         function generateQRCode(invitationId) {
             console.log('Generating QR code for invitation ID:', invitationId);
@@ -2209,6 +2375,189 @@
           }
         });
       });
+    </script>
+    <script>
+      // Populate comparison block in Step 3
+      function populateComparisonBlock(au10tixData) {
+        // Store user data and verification data globally for comparison
+        window.userData = {
+          firstName: $('#firstname').val() || '',
+          lastName: $('#lastname').val() || '',
+          email: $('#email').val() || '',
+          phoneNumber: $('#phone').val() || '',
+          dateOfBirth: $('#dob').val() || '',
+          idNumber: $('#idnumber').val() || ''
+        };
+        
+        window.verificationData = {
+          firstName: '',
+          lastName: '',
+          dateOfBirth: '',
+          idNumber: ''
+        };
+        
+        // Extract verification data from Au10tix response
+        if (au10tixData && au10tixData.identity) {
+          window.verificationData.firstName = au10tixData.identity.firstName || '';
+          window.verificationData.lastName = au10tixData.identity.lastName || '';
+          window.verificationData.dateOfBirth = au10tixData.identity.dateOfBirth || '';
+          window.verificationData.idNumber = au10tixData.identity.idNumber || '';
+        }
+        
+        // Show both comparison blocks
+        $('#comparison-block').show();
+        $('#comparison-analysis').show();
+        
+        // Format dates for display (show only date portion)
+        const formatDateForDisplay = (dateStr) => {
+          if (!dateStr) return 'N/A';
+          // Try to extract YYYY-MM-DD format
+          const dateMatch = dateStr.match(/^\d{4}-\d{2}-\d{2}/);
+          if (dateMatch) {
+            return dateMatch[0];
+          }
+          // Try ISO format with time
+          const isoMatch = dateStr.match(/^(\d{4}-\d{2}-\d{2})T/);
+          if (isoMatch) {
+            return isoMatch[1];
+          }
+          // If no match, return the original string
+          return dateStr;
+        };
+        
+        // Populate the basic comparison
+        $('#entered-firstname').text(userData.firstName || 'N/A');
+        $('#entered-lastname').text(userData.lastName || 'N/A');
+        $('#entered-email').text(userData.email || 'N/A');
+        $('#entered-phone').text(userData.phoneNumber || 'N/A');
+        $('#entered-dob').text(formatDateForDisplay(userData.dateOfBirth));
+        $('#entered-idnumber').text(userData.idNumber || 'N/A');
+        
+        $('#verified-firstname').text(verificationData.firstName || 'N/A');
+        $('#verified-lastname').text(verificationData.lastName || 'N/A');
+        $('#verified-dob').text(formatDateForDisplay(verificationData.dateOfBirth));
+        $('#verified-id').text(verificationData.idNumber || 'N/A');
+        
+        // Enhanced comparison analysis
+        let matchCount = 0;
+        const totalFields = 4; // firstName, lastName, dateOfBirth, idNumber
+        
+        // First Name comparison
+        const firstNameMatch = compareStrings(userData.firstName, verificationData.firstName);
+        $('#analysis-firstname-entered').text(userData.firstName || 'N/A');
+        $('#analysis-firstname-verified').text(verificationData.firstName || 'N/A');
+        if (firstNameMatch) {
+          $('#firstname-status').html('<span class="badge bg-success"><i class="bi bi-check-circle"></i> Match</span>');
+          $('#firstname-match').addClass('table-success');
+          matchCount++;
+        } else {
+          $('#firstname-status').html('<span class="badge bg-danger"><i class="bi bi-x-circle"></i> Mismatch</span>');
+          $('#firstname-match').addClass('table-danger');
+        }
+        
+        // Last Name comparison
+        const lastNameMatch = compareStrings(userData.lastName, verificationData.lastName);
+        $('#analysis-lastname-entered').text(userData.lastName || 'N/A');
+        $('#analysis-lastname-verified').text(verificationData.lastName || 'N/A');
+        if (lastNameMatch) {
+          $('#lastname-status').html('<span class="badge bg-success"><i class="bi bi-check-circle"></i> Match</span>');
+          $('#lastname-match').addClass('table-success');
+          matchCount++;
+        } else {
+          $('#lastname-status').html('<span class="badge bg-danger"><i class="bi bi-x-circle"></i> Mismatch</span>');
+          $('#lastname-match').addClass('table-danger');
+        }
+        
+        // Date of Birth comparison
+        const dobMatch = compareStrings(userData.dateOfBirth, verificationData.dateOfBirth);
+        
+        
+        $('#analysis-dob-entered').text(formatDateForDisplay(userData.dateOfBirth));
+        $('#analysis-dob-verified').text(formatDateForDisplay(verificationData.dateOfBirth));
+        if (dobMatch) {
+          $('#dob-status').html('<span class="badge bg-success"><i class="bi bi-check-circle"></i> Match</span>');
+          $('#dob-match').addClass('table-success');
+          matchCount++;
+        } else {
+          $('#dob-status').html('<span class="badge bg-danger"><i class="bi bi-x-circle"></i> Mismatch</span>');
+          $('#dob-match').addClass('table-danger');
+        }
+        
+        // ID Number comparison
+        const idNumberMatch = compareStrings(userData.idNumber, verificationData.idNumber);
+        $('#analysis-idnumber-entered').text(userData.idNumber || 'N/A');
+        $('#analysis-idnumber-verified').text(verificationData.idNumber || 'N/A');
+        if (idNumberMatch) {
+          $('#idnumber-status').html('<span class="badge bg-success"><i class="bi bi-check-circle"></i> Match</span>');
+          $('#idnumber-match').addClass('table-success');
+          matchCount++;
+        } else {
+          $('#idnumber-status').html('<span class="badge bg-danger"><i class="bi bi-x-circle"></i> Mismatch</span>');
+          $('#idnumber-match').addClass('table-danger');
+        }
+        
+        // Summary
+        $('#match-count').html(`<strong>${matchCount} of ${totalFields} fields match</strong>`);
+        
+        if (matchCount === totalFields) {
+          $('#overall-status').removeClass('alert-danger alert-warning').addClass('alert-success')
+            .html('<i class="bi bi-check-circle-fill"></i> <strong>Verification Passed</strong><br>All fields match successfully');
+        } else if (matchCount > 0) {
+          $('#overall-status').removeClass('alert-success alert-danger').addClass('alert-warning')
+            .html('<i class="bi bi-exclamation-triangle-fill"></i> <strong>Partial Match</strong><br>Some fields do not match');
+        } else {
+          $('#overall-status').removeClass('alert-success alert-warning').addClass('alert-danger')
+            .html('<i class="bi bi-x-circle-fill"></i> <strong>Verification Failed</strong><br>No fields match');
+        }
+        
+        // Show the next button
+        $('#enrollment-next-btn').show();
+      }
+      
+      // Helper function to compare strings (case-insensitive, trim whitespace)
+      function compareStrings(str1, str2) {
+        if (!str1 && !str2) return true; // Both empty/null
+        if (!str1 || !str2) return false; // One is empty/null
+        
+        // Convert to strings and trim
+        const s1 = str1.toString().trim();
+        const s2 = str2.toString().trim();
+        
+        // For date comparison, extract only the date portion (YYYY-MM-DD)
+        // Handle various date formats that might come from Au10tix
+        const extractDateOnly = (dateStr) => {
+          if (!dateStr) return '';
+          
+          // Try to match YYYY-MM-DD format
+          const dateMatch = dateStr.match(/^(\d{4}-\d{2}-\d{2})/);
+          if (dateMatch) {
+            return dateMatch[1];
+          }
+          
+          // Try to match other common date formats
+          const isoMatch = dateStr.match(/^(\d{4}-\d{2}-\d{2})T/);
+          if (isoMatch) {
+            return isoMatch[1];
+          }
+          
+          // If no match, return the original string
+          return dateStr;
+        };
+        
+        // Check if both strings look like dates (contain dashes and numbers)
+        const isDate1 = /\d{4}-\d{2}-\d{2}/.test(s1);
+        const isDate2 = /\d{4}-\d{2}-\d{2}/.test(s2);
+        
+        // If both are dates, compare only the date portion
+        if (isDate1 && isDate2) {
+          const date1 = extractDateOnly(s1);
+          const date2 = extractDateOnly(s2);
+          return date1 === date2;
+        }
+        
+        // For non-date strings, do case-insensitive comparison
+        return s1.toLowerCase() === s2.toLowerCase();
+      }
     </script>
 </body>
 </html> 
