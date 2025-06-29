@@ -83,8 +83,8 @@ func main() {
 	// Public routes
 	log.Println("Setting up public routes...")
 	r.GET("/", func(c *gin.Context) {
-		log.Println("Root route accessed, redirecting to /login")
-		c.Redirect(http.StatusFound, "/login")
+		log.Println("Root route accessed, redirecting to /dashboard")
+		c.Redirect(http.StatusFound, "/dashboard")
 	})
 
 	r.GET("/login", loginHandler.LoginPage)
@@ -102,24 +102,17 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"message": "Test endpoint working"})
 	})
 
-	// Protected routes
-	log.Println("Setting up protected routes...")
-	protected := r.Group("/")
-	protected.Use(authMiddleware())
-
-	protected.GET("/dashboard", func(c *gin.Context) {
-		user := c.MustGet("user").(string)
-		log.Printf("✅ Authenticated access to /dashboard by user: %s", user)
-		log.Println("Dashboard accessed")
+	// Dashboard route (now public, no authentication required)
+	r.GET("/dashboard", func(c *gin.Context) {
+		log.Println("Dashboard accessed (public)")
 		c.HTML(http.StatusOK, "dashboard.html", gin.H{
-			"user": user,
+			"user": "admin", // Default user since no login required
 		})
 	})
 
-	protected.GET("/self-service", func(c *gin.Context) {
-		user := c.MustGet("user").(string)
-		log.Printf("✅ Authenticated access to /self-service by user: %s", user)
-		log.Println("Self-service flow accessed")
+	// Self-service route (now public, no authentication required)
+	r.GET("/self-service", func(c *gin.Context) {
+		log.Println("Self-service flow accessed (public)")
 
 		// Load config and create SDO config JSON
 		cfg := config.Load()
@@ -148,23 +141,28 @@ func main() {
 		sdoConfigJSON, _ := json.Marshal(sdoConfig)
 
 		c.HTML(http.StatusOK, "self-service-flow.html", gin.H{
-			"user":          user,
+			"user":          "admin", // Default user since no login required
 			"SDOConfigJSON": string(sdoConfigJSON),
 		})
 	})
 
-	// Configuration routes
-	protected.GET("/config", configHandler.ConfigPage)
-	protected.POST("/save-config", configHandler.SaveConfig)
-	protected.GET("/get-config", configHandler.GetConfig)
-	protected.GET("/export-config", configHandler.ExportConfig)
-	protected.POST("/import-config", configHandler.ImportConfig)
-	protected.POST("/test-sdo-connection", configHandler.TestSDOConnection)
-	protected.POST("/test-au10tix-connection", configHandler.TestAu10tixConnection)
+	// Configuration routes (now public, no authentication required)
+	r.GET("/config", configHandler.ConfigPage)
+	r.POST("/save-config", configHandler.SaveConfig)
+	r.GET("/get-config", configHandler.GetConfig)
+	r.GET("/export-config", configHandler.ExportConfig)
+	r.POST("/import-config", configHandler.ImportConfig)
+	r.POST("/test-sdo-connection", configHandler.TestSDOConnection)
+	r.POST("/test-au10tix-connection", configHandler.TestAu10tixConnection)
 
-	// Verification routes
-	protected.POST("/start-verification", verificationHandler.StartVerification)
-	protected.GET("/check-verification/:id", verificationHandler.GetVerificationStatus)
+	// Verification routes (now public, no authentication required)
+	r.POST("/start-verification", verificationHandler.StartVerification)
+	r.GET("/check-verification/:id", verificationHandler.GetVerificationStatus)
+
+	// Protected routes
+	log.Println("Setting up protected routes...")
+	protected := r.Group("/")
+	protected.Use(authMiddleware())
 
 	// API routes
 	api := r.Group("/api")
@@ -206,9 +204,8 @@ func main() {
 	port := ":8080"
 	log.Printf("🚀 Server starting on port %s", port)
 	log.Printf("📱 Visit: http://localhost%s/", port)
-	log.Printf("🔑 Login: http://localhost%s/login (admin/admin)", port)
-	log.Printf("🏠 Dashboard: http://localhost%s/dashboard", port)
-	log.Printf("⚙️ Configuration: http://localhost%s/config", port)
+	log.Printf("🏠 Dashboard: http://localhost%s/dashboard (no login required)", port)
+	log.Printf("⚙️ Configuration: http://localhost%s/config (no login required)", port)
 	log.Printf("🏥 Health: http://localhost%s/health", port)
 	log.Printf("🧪 Test: http://localhost%s/test", port)
 	log.Println("=====================================")
