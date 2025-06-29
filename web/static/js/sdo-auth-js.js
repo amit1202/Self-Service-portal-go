@@ -6,6 +6,12 @@ let qrCodesGenerated = 0;
 let usersFound = 0;
 var sdoEnrollmentStarted = false;
 
+// Enrollment tracking
+let enrollmentCompleted = {
+    octopus: false,
+    fido: false
+};
+
 // Test invitation ID from the user
 const TEST_INVITATION_ID = "018fc8bbcD5SLtUzkD33ykrzXpYaEYGWbw1ksgukLVNGniSpQhQR6p6tcSo5WNDqq21bPjeU";
 
@@ -3744,6 +3750,20 @@ function compareStrings(str1, str2) {
     return str1.toString().trim().toLowerCase() === str2.toString().trim().toLowerCase();
 }
 
+// Helper function to update Step 4 button text based on enrollment status
+function updateStep4ButtonText() {
+    const buttonText = $('#step-4-next-text');
+    console.log('Updating Step 4 button text. Enrollment status:', enrollmentCompleted);
+    
+    if (enrollmentCompleted.fido && !enrollmentCompleted.octopus) {
+        buttonText.text('Next: Complete Process');
+        console.log('FIDO-only enrollment detected, button text set to "Next: Complete Process"');
+    } else {
+        buttonText.text('Next: Test Authentication');
+        console.log('OCTOPUS enrollment detected, button text set to "Next: Test Authentication"');
+    }
+}
+
 // Add dual enrollment functions for Step 4
 function enrollOctopus() {
     $('#octopus-enrollment-area').hide();
@@ -3773,13 +3793,22 @@ function enrollOctopus() {
                 $('#octopus-enrollment-area').show();
                 $('#fido-enrollment-area').hide();
                 $('#step-4-alerts').html('<div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>OCTOPUS invitation sent successfully!</div>');
+                
+                // Mark OCTOPUS enrollment as completed
+                enrollmentCompleted.octopus = true;
+                
+                // Update button text and enable the button
+                updateStep4ButtonText();
+                $('#step-4-next').prop('disabled', false);
             } else {
                 $('#step-4-alerts').html('<div class="alert alert-danger"><i class="bi bi-x-circle me-2"></i>Failed to send OCTOPUS invitation: ' + (response.octopus_error || 'No invitation ID received') + '</div>');
+                $('#step-4-next').prop('disabled', true);
             }
         },
         error: function(xhr) {
             console.error('OCTOPUS invitation error:', xhr);
             $('#step-4-alerts').html('<div class="alert alert-danger"><i class="bi bi-x-circle me-2"></i>Server error sending OCTOPUS invitation.</div>');
+            $('#step-4-next').prop('disabled', true);
         }
     });
 }
@@ -3810,13 +3839,22 @@ function enrollFIDO() {
                 $('#fido-enrollment-area').show();
                 $('#octopus-enrollment-area').hide();
                 $('#step-4-alerts').html('<div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>FIDO invitation sent successfully!</div>');
+                
+                // Mark FIDO enrollment as completed
+                enrollmentCompleted.fido = true;
+                
+                // Update button text and enable the button
+                updateStep4ButtonText();
+                $('#step-4-next').prop('disabled', false);
             } else {
                 $('#step-4-alerts').html('<div class="alert alert-danger"><i class="bi bi-x-circle me-2"></i>Failed to send FIDO invitation: ' + (response.fido_error || 'No invitation ID received') + '</div>');
+                $('#step-4-next').prop('disabled', true);
             }
         },
         error: function(xhr) {
             console.error('FIDO invitation error:', xhr);
             $('#step-4-alerts').html('<div class="alert alert-danger"><i class="bi bi-x-circle me-2"></i>Server error sending FIDO invitation.</div>');
+            $('#step-4-next').prop('disabled', true);
         }
     });
 }

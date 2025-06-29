@@ -994,7 +994,7 @@
                         <i class="bi bi-arrow-left me-2"></i>Previous
                     </button>
                     <button class="btn btn-primary" onclick="proceedToStep5()" id="step-4-next" disabled>
-                        <i class="bi bi-arrow-right me-2"></i>Next: Test Authentication
+                        <i class="bi bi-arrow-right me-2"></i><span id="step-4-next-text">Next: Test Authentication</span>
                     </button>
                 </div>
             </div>
@@ -1183,7 +1183,7 @@
                         <i class="bi bi-arrow-left me-2"></i>Previous
                     </button>
                     <button class="btn btn-primary" onclick="proceedToStep5()" id="step-4-next" disabled>
-                        <i class="bi bi-arrow-right me-2"></i>Next: Test Authentication
+                        <i class="bi bi-arrow-right me-2"></i><span id="step-4-next-text">Next: Test Authentication</span>
                     </button>
                 </div>
             </div>
@@ -1980,10 +1980,20 @@
             
             console.log('Starting SDO enrollment for user:', userData.email);
             
+            // Reset enrollment tracking for this step
+            enrollmentCompleted = {
+                octopus: false,
+                fido: false
+            };
+            
             // Show the dual enrollment options instead of auto-sending invitation
             $('#enrollment-container').show();
             $('#enrollment-error').hide();
             $('#qr-code-container').hide();
+            
+            // Ensure the "Next: Test Authentication" button is disabled by default
+            $('#step-4-next').prop('disabled', true);
+            updateStep4ButtonText();
         }
         
 
@@ -2050,8 +2060,19 @@
         }
         
         function proceedToStep5() {
-            goToStep(5);
-            testAuthentication();
+            // Check enrollment status to determine if authentication testing should be bypassed
+            console.log('proceedToStep5 called. Enrollment status:', enrollmentCompleted);
+            
+            if (enrollmentCompleted.fido && !enrollmentCompleted.octopus) {
+                // Only FIDO enrollment was completed - bypass authentication testing
+                console.log('Only FIDO enrollment completed, bypassing authentication test and going directly to Step 6');
+                goToStep(6);
+            } else {
+                // OCTOPUS enrollment was completed (either alone or with FIDO) - proceed with authentication test
+                console.log('OCTOPUS enrollment completed (alone or with FIDO), proceeding with authentication test in Step 5');
+                goToStep(5);
+                testAuthentication();
+            }
         }
         
         function testAuthentication() {
@@ -2109,6 +2130,12 @@
             userData = {};
             verificationSessionId = null;
             invitationId = null;
+            
+            // Reset enrollment tracking
+            enrollmentCompleted = {
+                octopus: false,
+                fido: false
+            };
             
             // Reset step completion status
             stepCompletionStatus = {
