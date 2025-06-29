@@ -1007,33 +1007,33 @@
                 <div class="step-number">5</div>
             </div>
             <div class="step-body">
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle me-2"></i>
-                    Testing authentication after enrollment...
+                <div class="alert alert-info text-center" style="font-size: 1.5rem; padding: 2rem 1rem;">
+                    <i class="bi bi-phone" style="font-size: 3rem; vertical-align: middle;"></i>
+                    <br/>
+                    <strong>Please check your phone for a notification to complete authentication!</strong>
                 </div>
-                
                 <div id="test-auth-container">
                     <div class="text-center">
                         <div class="loading-spinner"></div>
-                        <p class="mt-2">Sending test authentication request...</p>
+                        <p class="mt-2">Waiting for authentication...</p>
                     </div>
                 </div>
-                
-                <div id="test-auth-result" class="hidden">
-                    <div class="status-indicator status-success">
-                        <i class="bi bi-check-circle me-2"></i>
-                        Authentication test completed successfully!
+                <div id="test-auth-success" class="mt-3 hidden">
+                    <div class="alert alert-success text-center" style="font-size: 1.5rem; padding: 2rem 1rem;">
+                        <i class="bi bi-check-circle" style="font-size: 3rem; vertical-align: middle; color: #28a745;"></i>
+                        <br/>
+                        <strong>Authentication Successful!</strong>
+                        <br/>
+                        <span style="font-size: 1.2rem;">Your SDO authentication has been completed successfully.</span>
                     </div>
                 </div>
-                
-                <div id="step-5-alerts"></div>
-                
-                <div class="step-navigation">
+                <div id="test-auth-result" class="mt-3 hidden"></div>
+                <div class="step-navigation mt-4">
                     <button class="btn btn-secondary" onclick="goToStep(4)">
                         <i class="bi bi-arrow-left me-2"></i>Previous
                     </button>
-                    <button class="btn btn-success" onclick="proceedToStep6()" id="step-5-next" disabled>
-                        <i class="bi bi-arrow-right me-2"></i>Complete Process
+                    <button class="btn btn-primary" onclick="proceedToStep6()" id="step-5-next" disabled>
+                        <i class="bi bi-arrow-right me-2"></i>Next: Complete
                     </button>
                 </div>
             </div>
@@ -2096,7 +2096,8 @@
                 success: function(response) {
                     if (response.success) {
                         $('#test-auth-container').addClass('hidden');
-                        $('#test-auth-result').removeClass('hidden');
+                        $('#test-auth-success').removeClass('hidden');
+                        $('#test-auth-result').addClass('hidden');
                         $('#step-5-next').prop('disabled', false);
                         showAlert(5, 'success', 'User authentication verified successfully!');
                     } else {
