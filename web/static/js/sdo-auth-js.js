@@ -1876,7 +1876,11 @@ function generateTestQRCode() {
         return;
     }
     
-    const testEnrollmentUrl = `https://amitmt.doubleoctopus.io/enroll?invitation=${TEST_INVITATION_ID}`;
+    // Use the SDO URL from configuration, removing /admin suffix for enrollment
+    const sdoBaseUrl = window.SDO_CONFIG && window.SDO_CONFIG.url ? 
+        window.SDO_CONFIG.url.replace('/admin', '') : 
+        'https://amitmt.doubleoctopus.io';
+    const testEnrollmentUrl = `${sdoBaseUrl}/enroll?invitation=${TEST_INVITATION_ID}`;
     console.log('Test Enrollment URL:', testEnrollmentUrl);
     
     // Show loading state
@@ -1887,7 +1891,7 @@ function generateTestQRCode() {
         test_mode: true,
         invitation_id: TEST_INVITATION_ID,
         enrollment_url: testEnrollmentUrl,
-        admin_url: "https://amitmt.doubleoctopus.io/admin"
+        admin_url: window.SDO_CONFIG && window.SDO_CONFIG.url ? window.SDO_CONFIG.url : "https://amitmt.doubleoctopus.io/admin"
     });
     
     showAlert('🧪 Test QR Code generated with real invitation ID!', 'success');
@@ -1900,7 +1904,11 @@ window.testDirectQR = function() {
     console.log('QRCode.toCanvas available:', typeof QRCode !== 'undefined' && typeof QRCode.toCanvas === 'function');
     
     if (typeof QRCode !== 'undefined' && typeof QRCode.toCanvas === 'function') {
-        const testUrl = 'https://amitmt.doubleoctopus.io/enroll?invitation=018fc8bbcD5SLtUzkD33ykrzXpYaEYGWbw1ksgukLVNGniSpQhQR6p6tcSo5WNDqq21bPjeU';
+        // Use the SDO URL from configuration, removing /admin suffix for enrollment
+        const sdoBaseUrl = window.SDO_CONFIG && window.SDO_CONFIG.url ? 
+            window.SDO_CONFIG.url.replace('/admin', '') : 
+            'https://amitmt.doubleoctopus.io';
+        const testUrl = `${sdoBaseUrl}/enroll?invitation=018fc8bbcD5SLtUzkD33ykrzXpYaEYGWbw1ksgukLVNGniSpQhQR6p6tcSo5WNDqq21bPjeU`;
         
         console.log('Generating QR with URL:', testUrl);
         
@@ -3787,7 +3795,7 @@ function enrollOctopus() {
             
             if (invitationId) {
                 $('#octopus-invitation-id').text(invitationId);
-                // Generate QR code for OCTOPUS
+                // Generate QR code for OCTOPUS using the standard doubleoctopus.com URL
                 const qrUrl = 'https://doubleoctopus.com/enroll?code=' + invitationId;
                 $('#octopus-qr-code-image').attr('src', 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(qrUrl));
                 $('#octopus-enrollment-area').show();
@@ -3834,7 +3842,15 @@ function enrollFIDO() {
             const invitationId = response.fido_invitationId || response.invitationId;
             
             if (invitationId) {
-                const fidoLink = 'https://amitmt.doubleoctopus.io?invitation=' + invitationId;
+                // Use the SDO URL from configuration, removing /admin suffix for enrollment
+                let sdoBaseUrl = window.SDO_CONFIG && window.SDO_CONFIG.url ? 
+                    window.SDO_CONFIG.url.replace(/\/?admin$/, '') : 
+                    'https://amitmt.doubleoctopus.io';
+                // Ensure sdoBaseUrl starts with https://
+                if (!/^https?:\/\//i.test(sdoBaseUrl)) {
+                    sdoBaseUrl = 'https://' + sdoBaseUrl.replace(/^\/*/, '');
+                }
+                const fidoLink = sdoBaseUrl + '?invitation=' + invitationId;
                 $('#fido-invitation-link').html('<a href="' + fidoLink + '" target="_blank" class="btn btn-primary">' + fidoLink + '</a>');
                 $('#fido-enrollment-area').show();
                 $('#octopus-enrollment-area').hide();

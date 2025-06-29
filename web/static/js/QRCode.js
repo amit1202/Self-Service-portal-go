@@ -465,7 +465,11 @@ window.testQRManagerWithReal = async function() {
     console.log('=== Testing QR Manager with Real Data ===');
     
     const invitationId = "018fc8bbcD5SLtUzkD33ykrzXpYaEYGWbw1ksgukLVNGniSpQhQR6p6tcSo5WNDqq21bPjeU";
-    const enrollmentUrl = `https://amitmt.doubleoctopus.io/enroll?invitation=${invitationId}`;
+    // Use the SDO URL from configuration, removing /admin suffix for enrollment
+    const sdoBaseUrl = window.SDO_CONFIG && window.SDO_CONFIG.url ? 
+        window.SDO_CONFIG.url.replace('/admin', '') : 
+        'https://amitmt.doubleoctopus.io';
+    const enrollmentUrl = `${sdoBaseUrl}/enroll?invitation=${invitationId}`;
     
     try {
         await displayQRCodeFixed(enrollmentUrl, invitationId, {

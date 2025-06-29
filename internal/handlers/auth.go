@@ -1179,6 +1179,7 @@ func (h *AuthHandler) GenerateQRCode(c *gin.Context) {
 
 	var req struct {
 		InvitationID string `json:"invitationId"`
+		Type         string `json:"type"` // "OCTOPUS" or "FIDO"
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -1191,13 +1192,20 @@ func (h *AuthHandler) GenerateQRCode(c *gin.Context) {
 
 	if req.InvitationID != "" {
 		// Generate QR code for specific invitation
-		log.Printf("🖼️ Generate QR Code request received for invitation ID: %s", req.InvitationID)
+		log.Printf("🖼️ Generate QR Code request received for invitation ID: %s, Type: %s", req.InvitationID, req.Type)
 
-		// Construct enrollment URL directly from the invitation ID
-		// The user specified this format.
-		enrollmentURL = "https://doubleoctopus.com/enroll?code=" + req.InvitationID
+		// Use different URLs based on invitation type
+		if req.Type == "FIDO" {
+			// For FIDO, use the SDO URL from config without /admin suffix
+			sdoBaseURL := strings.TrimSuffix(authData["url"], "/admin")
+			enrollmentURL = sdoBaseURL + "/enroll?code=" + req.InvitationID
+			log.Printf("✅ QR Code: Generating FIDO QR code with enrollment URL: %s", enrollmentURL)
+		} else {
+			// For OCTOPUS, use the standard doubleoctopus.com URL
+			enrollmentURL = "https://doubleoctopus.com/enroll?code=" + req.InvitationID
+			log.Printf("✅ QR Code: Generating OCTOPUS QR code with enrollment URL: %s", enrollmentURL)
+		}
 		invitationID = req.InvitationID
-		log.Printf("✅ QR Code: Generating QR code with enrollment URL: %s", enrollmentURL)
 	} else {
 		// Generate general QR code for portal enrollment
 		log.Printf("🖼️ Generate general QR Code request (no invitation ID)")
