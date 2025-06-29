@@ -6,6 +6,8 @@
 *.dylib
 bin/
 dist/
+main
+self-service-portal-app
 
 # Test binary, built with `go test -c`
 *.test
@@ -20,14 +22,17 @@ go.work
 .env
 .env.local
 .env.production
+.env.staging
 
 # Database files
 *.db
 *.sqlite
 *.sqlite3
+portal.db
 
 # Logs
 *.log
+logs/
 
 # OS generated files
 .DS_Store
@@ -48,3 +53,34 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Configuration files with sensitive data
+portal-config.json
+cookies.txt
+
+# API test data
+api_data.json
+api_project.json
+
+# Build artifacts
+build/
+release/
+
+# Coverage reports
+coverage/
+*.coverage
+
+# SSL certificates
+*.pem
+*.key
+*.crt
+*.csr
+
+# Docker
+.dockerignore
+docker-compose.override.yml

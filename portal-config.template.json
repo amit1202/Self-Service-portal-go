@@ -1,0 +1,21 @@
+{
+  "general": {
+    "theme": "dark",
+    "default_view": "verification",
+    "email_notifications": true,
+    "browser_notifications": false
+  },
+  "auth": {
+    "au10tix_token": "YOUR_AU10TIX_TOKEN_HERE",
+    "sdo_url": "YOUR_SDO_URL_HERE",
+    "sdo_email": "YOUR_SDO_EMAIL_HERE",
+    "sdo_password": "YOUR_SDO_PASSWORD_HERE"
+  },
+  "api": {
+    "au10tix_base_url": "https://eus-api.au10tixservicesstaging.com",
+    "sdo_api_url": "https://YOUR_SDO_URL_HERE/api",
+    "api_timeout": 30,
+    "api_retries": 3
+  },
+  "updated": "2025-06-29T00:00:00.000000+00:00"
+} 

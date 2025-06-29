@@ -1,0 +1,36 @@
+[Unit]
+Description=Self Service Portal
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=portal
+Group=portal
+WorkingDirectory=/opt/self-service-portal
+ExecStart=/opt/self-service-portal/main
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=self-service-portal
+
+# Environment variables
+Environment=GIN_MODE=release
+Environment=PORT=8080
+Environment=SESSION_SECRET=your-production-session-secret
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/self-service-portal/logs
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=4096
+
+[Install]
+WantedBy=multi-user.target 
